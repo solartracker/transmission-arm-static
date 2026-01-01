@@ -544,6 +544,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     cd "$PKG_SOURCE_SUBDIR"
 
     ./configure \
+        LDFLAGS="-static" \
         --enable-static \
         --disable-shared \
         --disable-nls \
@@ -563,6 +564,13 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     make DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}" install
 
     cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
+    strip "transmission-cli"
+    strip "transmission-create"
+    strip "transmission-cli-static"
+    strip "transmission-daemon"
+    strip "transmission-edit"
+    strip "transmission-remote"
+    strip "transmission-show"
     mv -f transmission-cli transmission-cli.static
     mv -f transmission-create transmission-create.static
     mv -f transmission-cli-static transmission-cli.static
@@ -733,6 +741,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     ./autogen.sh
 
     ./configure \
+        LDFLAGS="-static" \
         --enable-static \
         --disable-shared \
         --disable-nls \
@@ -752,6 +761,13 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     make DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}" install
 
     cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
+    strip "transmission-cli"
+    strip "transmission-create"
+    strip "transmission-cli-static"
+    strip "transmission-daemon"
+    strip "transmission-edit"
+    strip "transmission-remote"
+    strip "transmission-show"
     mv -f transmission-cli transmission-cli.static
     mv -f transmission-create transmission-create.static
     mv -f transmission-cli-static transmission-cli.static
