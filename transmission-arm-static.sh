@@ -58,15 +58,13 @@ verify_hash() {
     fi
 
     if [ -z "$option" ]; then
-        # hash the compressed binary file.  this method is best when downloading
-        # compressed binary files.  because when you download a compressed binary
-        # file, it is the same for everyone who downloads that file now and in the
-        # future.
+        # hash the compressed binary file. this method is best when downloading
+        # compressed binary files.
         actual="$(sha256sum "$file" | awk '{print $1}')"
     elif [ "$option" == "tar_extract" ]; then
-        # hash the data, file names, directory names.  this method is best when
-        # archiving Github repos.  because with Github repos, you are producing
-        # the compressed binary archive, and someone else may end up with a "different"
+        # hash the data, file names, directory names. this method is best when
+        # archiving Github repos. with Github repos, you are producing
+        # the compressed binary archive. someone else may end up with a "different"
         # compressed binary archive that contains the same repo data.
         actual="$(tar -xJOf "$file" | sha256sum | awk '{print $1}')"
     elif [ "$option" == "xz_extract" ]; then
@@ -506,11 +504,13 @@ export PATH="$TOMATOWARE_SYSROOT/usr/bin:$TOMATOWARE_SYSROOT/usr/local/sbin:$TOM
 export PKG_CONFIG_PATH="$TOMATOWARE_SYSROOT/lib/pkgconfig"
 #export PKG_CONFIG="pkg-config --static"
 
-# get patches
+# get patches (only needs to be run once by me, then keep it commented out)
 #update_patch_library "3895f460ea7e7a99eeff7ed65447e70a34a8eda6" "net/transmission/patches" "transmission" "transmission-3.00"
 #ln -sfn "transmission-3.00" "${SCRIPT_DIR}/patches/transmission/transmission-3.00+git" 
 #update_patch_library "594346b9325c7f5d07c60c2e9727cfe83e768067" "net/transmission/patches" "transmission" "transmission-4.0.6"
 #ln -sfn "transmission-4.0.6" "${SCRIPT_DIR}/patches/transmission/transmission-4.0.6+git" 
+
+
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
 ################################################################################
@@ -552,17 +552,27 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --datarootdir="/usr/local" \
-        --prefix="/usr" \
+        --prefix="/opt/static" \
         --with-sysroot="$TOMATOWARE_SYSROOT" \
     || handle_configure_error $?
 
     $MAKE
-    make DESTDIR="$TOMATOWARE_SYSROOT" install
+    make DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}" install
+
+    cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
+    mv -f transmission-cli transmission-cli.static
+    mv -f transmission-create transmission-create.static
+    mv -f transmission-cli-static transmission-cli.static
+    mv -f transmission-daemon transmission-daemon.static
+    mv -f transmission-edit transmission-edit.static
+    mv -f transmission-remote transmission-remote.static
+    mv -f transmission-show transmission-show.static
+    cd $OLDPWD
 
     touch __package_installed
 fi
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]
+
 
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]; then
@@ -610,6 +620,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     touch __package_installed
 fi
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]
+
 
 
 if is_version_git "$BUILD_TRANSMISSION_VERSION"; then
@@ -685,6 +696,8 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 fi
 fi # if is_version_git "$BUILD_TRANSMISSION_VERSION"
 
+
+
 if [ "$BUILD_TRANSMISSION_VERSION" = "3.00+git" ]; then
 ################################################################################
 # transmission-3.00+git
@@ -714,27 +727,42 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "$PKG_SOURCE_SUBDIR"
     cd "$PKG_SOURCE_SUBDIR"
 
-    ./autogen.sh \
+    ./autogen.sh
+
+    ./configure \
         --enable-static \
         --disable-shared \
         --disable-nls \
         --disable-silent-rules \
+        --disable-dependency-tracking \
         --enable-daemon \
         --enable-cli \
         --without-gtk \
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --datarootdir=/usr/local \
-        --prefix="$TOMATOWARE_SYSROOT" \
+        --prefix="/opt/static" \
+        --with-sysroot="$TOMATOWARE_SYSROOT" \
     || handle_configure_error $?
 
     $MAKE
-    make install
+    make DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}" install
+
+    cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
+    mv -f transmission-cli transmission-cli.static
+    mv -f transmission-create transmission-create.static
+    mv -f transmission-cli-static transmission-cli.static
+    mv -f transmission-daemon transmission-daemon.static
+    mv -f transmission-edit transmission-edit.static
+    mv -f transmission-remote transmission-remote.static
+    mv -f transmission-show transmission-show.static
+    cd $OLDPWD
 
     touch __package_installed
 fi
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00+git" ]
+
+
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6+git" ]; then
 ################################################################################
