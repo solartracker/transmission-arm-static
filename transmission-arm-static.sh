@@ -31,9 +31,16 @@ set -x
 # If autoconf/configure fails due to missing libraries or undefined symbols, you
 # immediately see all undefined references without having to manually search config.log
 handle_configure_error() {
+    local rc=$1
+
     #grep -R --include="config.log" --color=always "undefined reference" .
-    find . -name "config.log" -exec grep -H "undefined reference" {} \;
-    return 1
+    #find . -name "config.log" -exec grep -H "undefined reference" {} \;
+    find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
+
+    # Force failure if rc is zero, since error was detected
+    [ "$rc" -eq 0 ] && return 1
+
+    return $rc
 }
 
 ################################################################################
@@ -506,13 +513,14 @@ MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 export PATH="$TOMATOWARE_SYSROOT/usr/bin:$TOMATOWARE_SYSROOT/usr/local/sbin:$TOMATOWARE_SYSROOT/usr/local/bin:$TOMATOWARE_SYSROOT/usr/sbin:$TOMATOWARE_SYSROOT/sbin:$TOMATOWARE_SYSROOT/bin"
 export PKG_CONFIG_PATH="$TOMATOWARE_SYSROOT/lib/pkgconfig"
 #export PKG_CONFIG="pkg-config --static"
+ln -sfn /mmc/bin/bash /mmc/bin/sh
+#mv libcurl.so* libevent.so* libssl.so* libcrypto.so* libzstd.so* libz.so* __removed/
 
 # get patches (only needs to be run once by me, then keep it commented out)
 #update_patch_library "3895f460ea7e7a99eeff7ed65447e70a34a8eda6" "net/transmission/patches" "transmission" "transmission-3.00"
 #ln -sfn "transmission-3.00" "${SCRIPT_DIR}/patches/transmission/transmission-3.00+git" 
 #update_patch_library "594346b9325c7f5d07c60c2e9727cfe83e768067" "net/transmission/patches" "transmission" "transmission-4.0.6"
 #ln -sfn "transmission-4.0.6" "${SCRIPT_DIR}/patches/transmission/transmission-4.0.6+git" 
-
 
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
@@ -538,13 +546,50 @@ fi
 if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
     verify_hash "$PKG_SOURCE" "$PKG_HASH"
+    rm -rf "$PKG_SOURCE_SUBDIR"
     unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "$PKG_SOURCE_SUBDIR"
 
+    #cd "$TOMATOWARE_SYSROOT/lib"
+    #mkdir -p __removed
+    #mv libcurl.so* libevent.so* libssl.so* libcrypto.so* __removed/
+
     cd "$PKG_SOURCE_SUBDIR"
 
+    #export CFLAGS="-march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mfloat-abi=soft -ffunction-sections -fdata-sections -O3 -pipe -Wall -fPIC -std=gnu99 -D_GNU_SOURCE"
+    #export LT_SYS_LIBRARY_PATH=
+
+    #export STRIP=strip
+    #export AR=ar
+    #export AS=as
+    #export LD=ld
+    #export NM=nm
+    #export RANLIB=ranlib
+    #export OBJDUMP=objdump
+    #export READELF=readelf
+
+    #export CPPFLAGS="-I$TOMATOWARE_SYSROOT/include"
+    #export CFLAGS="$CFLAGS -DHAVE_DECL_HTONLL=0 -DHAVE_DECL_NTOHLL=0"
+    #export CXXFLAGS="$CFLAGS"
+    export LDFLAGS="-static -Wl,--gc-sections"
+
+    #export LIBS="/mmc/lib/libcurl.a -lzstd /mmc/lib/libevent.a /mmc/lib/libssl.a /mmc/lib/libcrypto.a /mmc/lib/libz.a -lrt -lm"
+    #export LIBS="/mmc/lib/libcurl.a /mmc/lib/libzstd.a /mmc/lib/libevent.a /mmc/lib/libssl.a /mmc/lib/libcrypto.a /mmc/lib/libz.a -lrt -lm"
+    #export LIBS="/mmc/lib/libcurl.a /mmc/lib/libzstd.a /mmc/lib/libevent.a /mmc/lib/libssl.a /mmc/lib/libcrypto.a /mmc/lib/libz.a /mmc/usr/lib/librt.a /mmc/usr/lib/libm.a /mmc/usr/lib/libc.a /mmc/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0/libgcc.a"
+
+    export LIBS="/mmc/lib/libcurl.a /mmc/lib/libzstd.a /mmc/lib/libevent.a /mmc/lib/libssl.a /mmc/lib/libcrypto.a /mmc/lib/libz.a -lrt -lm"
+
+    export LIBCURL_CFLAGS="-I$TOMATOWARE_SYSROOT/include"
+    export LIBCURL_LIBS="$TOMATOWARE_SYSROOT/lib/libcurl.a"
+    export LIBEVENT_CFLAGS="-I$TOMATOWARE_SYSROOT/include"
+    export LIBEVENT_LIBS="$TOMATOWARE_SYSROOT/lib/libevent.a"
+    export OPENSSL_CFLAGS="-I$TOMATOWARE_SYSROOT/include"
+    export OPENSSL_LIBS="$TOMATOWARE_SYSROOT/lib/libssl.a $TOMATOWARE_SYSROOT/lib/libcrypto.a"
+    export ZLIB_CFLAGS="-I$TOMATOWARE_SYSROOT/include"
+    export ZLIB_LIBS="$TOMATOWARE_SYSROOT/lib/libz.a"
+    export ZSTD_LIBS="$TOMATOWARE_SYSROOT/lib/libzstd.a"
+
     ./configure \
-        LDFLAGS="-static" \
         --enable-static \
         --disable-shared \
         --disable-nls \
@@ -556,28 +601,38 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --prefix="/opt/static" \
-        --with-sysroot="$TOMATOWARE_SYSROOT" \
+        --prefix=$TOMATOWARE_SYSROOT \
     || handle_configure_error $?
 
     $MAKE
-    make DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}" install
+    make install DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}"
 
-    cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
+    #cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
+    cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/mmc/bin"
     strip "transmission-cli"
     strip "transmission-create"
-    strip "transmission-cli-static"
     strip "transmission-daemon"
     strip "transmission-edit"
     strip "transmission-remote"
     strip "transmission-show"
-    mv -f transmission-cli transmission-cli.static
-    mv -f transmission-create transmission-create.static
-    mv -f transmission-cli-static transmission-cli.static
-    mv -f transmission-daemon transmission-daemon.static
-    mv -f transmission-edit transmission-edit.static
-    mv -f transmission-remote transmission-remote.static
-    mv -f transmission-show transmission-show.static
+    #mv -f transmission-cli transmission-cli.static
+    #mv -f transmission-create transmission-create.static
+    #mv -f transmission-daemon transmission-daemon.static
+    #mv -f transmission-edit transmission-edit.static
+    #mv -f transmission-remote transmission-remote.static
+    #mv -f transmission-show transmission-show.static
+    file "transmission-cli"
+    readelf -d "transmission-cli" | grep NEEDED
+    file "transmission-create"
+    readelf -d "transmission-create" | grep NEEDED
+    file "transmission-daemon"
+    readelf -d "transmission-daemon" | grep NEEDED
+    file "transmission-edit"
+    readelf -d "transmission-edit" | grep NEEDED
+    file "transmission-remote"
+    readelf -d "transmission-remote" | grep NEEDED
+    file "transmission-show"
+    readelf -d "transmission-show" | grep NEEDED
     cd $OLDPWD
 
     touch __package_installed
@@ -741,7 +796,6 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     ./autogen.sh
 
     ./configure \
-        LDFLAGS="-static" \
         --enable-static \
         --disable-shared \
         --disable-nls \
@@ -753,29 +807,12 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --prefix="/opt/static" \
+        --prefix="$TOMATOWARE_SYSROOT" \
         --with-sysroot="$TOMATOWARE_SYSROOT" \
     || handle_configure_error $?
 
     $MAKE
     make DESTDIR="$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}" install
-
-    cd "/$TOMATOWARE_SYSROOT/install/${PKG_SOURCE_SUBDIR}/opt/static/bin"
-    strip "transmission-cli"
-    strip "transmission-create"
-    strip "transmission-cli-static"
-    strip "transmission-daemon"
-    strip "transmission-edit"
-    strip "transmission-remote"
-    strip "transmission-show"
-    mv -f transmission-cli transmission-cli.static
-    mv -f transmission-create transmission-create.static
-    mv -f transmission-cli-static transmission-cli.static
-    mv -f transmission-daemon transmission-daemon.static
-    mv -f transmission-edit transmission-edit.static
-    mv -f transmission-remote transmission-remote.static
-    mv -f transmission-show transmission-show.static
-    cd $OLDPWD
 
     touch __package_installed
 fi
