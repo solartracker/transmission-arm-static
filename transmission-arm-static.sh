@@ -496,6 +496,9 @@ echo "Now running under: $(readlink /proc/$$/exe)"
 PKG_ROOT=transmission
 REBUILD_ALL=false
 BUILD_TRANSMISSION_VERSION="3.00"
+#BUILD_TRANSMISSION_VERSION="3.00+git"
+#BUILD_TRANSMISSION_VERSION="4.0.6"
+#BUILD_TRANSMISSION_VERSION="4.0.6+git"
 SRC="$TOMATOWARE_SYSROOT/src/$PKG_ROOT"
 mkdir -p "$SRC"
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
