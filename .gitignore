@@ -1,0 +1,27 @@
+# Ignore vi swap files
+*.swp
+
+# Ignore packages
+.deb
+
+# Ignore compiled programs
+/bin/
+
+# Ignore compiled binaries
+*.o
+*.exe
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore logs
+*.log
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore local config
+config/local.json
+
