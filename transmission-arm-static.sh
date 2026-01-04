@@ -873,7 +873,6 @@ if $REBUILD_ALL; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-rm -rf "${PKG_SOURCE_SUBDIR}"
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
