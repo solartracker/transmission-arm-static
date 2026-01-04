@@ -469,13 +469,35 @@ check_static() {
         ldd "${bin}" 2>&1 | sed 's/^/    /' || true
     done
 
-    if [ $rc -eq 1 ]; then
+    if [ ${rc} -eq 1 ]; then
         echo "*** NOT STATICALLY LINKED ***"
         echo "*** NOT STATICALLY LINKED ***"
         echo "*** NOT STATICALLY LINKED ***"
     fi
 
-    return $rc
+    return ${rc}
+}
+
+finalize_build() {
+    echo ""
+    echo "Stripping symbols and sections from files..."
+    strip -v "$@"
+
+    # Exit here, if the programs are not statically linked
+    # If any binaries are not static, check_static returns 1
+    # set -e will cause the shell to exit here, so renaming won't happen
+    echo ""
+    echo "Checking statically linked programs..."
+    check_static "$@"
+
+    # Append ".static" to the program names
+    echo ""
+    echo "Renaming programs with .static suffix..."
+    for bin in "$@"; do
+        mv -f "${bin}" "${bin}.static"
+    done
+
+    return 0
 }
 
 ################################################################################
@@ -660,12 +682,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -f "${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.so"*
 
     # strip and verify there are no dependencies for static build
-    cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
-    strip "zstd"
-    file "zstd"
-    readelf -d "zstd" | grep NEEDED || true
-    ldd "zstd" || true
-    cd $OLDPWD
+    finalize_build "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/zstd"
 
     touch __package_installed
 fi
@@ -718,12 +735,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install DESTDIR=""
 
     # strip and verify there are no dependencies for static build
-    cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
-    strip "openssl"
-    file "openssl"
-    readelf -d "openssl" | grep NEEDED || true
-    ldd "openssl" || true
-    cd $OLDPWD
+    finalize_build "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/openssl"
 
     touch __package_installed
 fi
@@ -791,12 +803,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install DESTDIR=""
 
     # strip and verify there are no dependencies for static build
-    cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
-    strip "curl"
-    file "curl" || true
-    readelf -d "curl" | grep NEEDED || true
-    ldd "curl" || true
-    cd $OLDPWD
+    finalize_build "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/curl"
 
     touch __package_installed
 fi
@@ -902,21 +909,14 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
     make install DESTDIR="${STAGEDIR}"
 
-    echo ""
-    echo "Stripping symbols and sections from files..."
-    strip -v "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-"*
-
-    # Exit here, if the programs are not statically linked
-    echo ""
-    echo "Checking statically linked programs..."
-    check_static "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-"*
-
-    # Append ".static" to the program names
-    echo ""
-    echo "Renaming programs with .static suffix..."
-    for bin in "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-"*; do
-        mv -f "$bin" "$bin.static"
-    done
+    # strip and verify there are no dependencies for static build
+    finalize_build \
+        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-cli" \
+        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-create" \
+        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-daemon" \
+        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-edit" \
+        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-remote" \
+        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-show"
 
     touch __package_installed
 fi
