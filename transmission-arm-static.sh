@@ -458,6 +458,25 @@ update_patch_library() {
     return 0
 }
 
+check_static() {
+    local rc=0
+    for bin in "$@"; do
+        echo "Checking ${bin}"
+        file "${bin}" | sed 's/^/    /' || true
+        if readelf -d "${bin}" 2>/dev/null | grep NEEDED; then
+            rc=1
+        fi
+        ldd "${bin}" 2>&1 | sed 's/^/    /' || true
+    done
+
+    if [ $rc -eq 1 ]; then
+        echo "*** NOT STATICALLY LINKED ***"
+        echo "*** NOT STATICALLY LINKED ***"
+        echo "*** NOT STATICALLY LINKED ***"
+    fi
+
+    return $rc
+}
 
 ################################################################################
 # Install the build environment
@@ -863,33 +882,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    #export LDFLAGS="${LDFLAGS}"
-    #export CPPFLAGS="${CPPFLAGS}"
-    #export CFLAGS="${CFLAGS}"
-    #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcurl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libevent.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a"
-
-    #export LIBS=" \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcurl.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libevent.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a \
-    #"
-
-    #export LIBS="-lcurl -lzstd -levent -lssl -lcrypto -lz"
-    #export LIBS="-latomic -lssl -lcrypto -lz -levent -lcurl -lm -ldl -pthread"
-    #export LIBS="-latomic -pthread"
-    export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt -latomic"
-
-    #export LIBCURL_CFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include"
-    #export LIBCURL_LIBS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -lcurl"
-    #export LIBEVENT_CFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include"
-    #export LIBEVENT_LIBS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -levent"
-    #export OPENSSL_CFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include"
-    #export OPENSSL_LIBS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -lssl -lcrypto"
-    #export ZLIB_CFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include"
-    #export ZLIB_LIBS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -lz"
+    export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt ${TOMATOWARE_SYSROOT}/lib/libatomic.a"
 
     LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
@@ -907,49 +900,24 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --prefix="${TOMATOWARE_SYSROOT}" \
     || handle_configure_error $?
 
-    $MAKE
+    $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
     make install DESTDIR="${STAGEDIR}"
 
-    #cd "/${TOMATOWARE_SYSROOT}/staging/opt/static/bin"
-    cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
-    strip "transmission-cli"
-    strip "transmission-create"
-    strip "transmission-daemon"
-    strip "transmission-edit"
-    strip "transmission-remote"
-    strip "transmission-show"
-    #mv -f transmission-cli transmission-cli.static
-    #mv -f transmission-create transmission-create.static
-    #mv -f transmission-daemon transmission-daemon.static
-    #mv -f transmission-edit transmission-edit.static
-    #mv -f transmission-remote transmission-remote.static
-    #mv -f transmission-show transmission-show.static
+    echo ""
+    echo "Stripping symbols and sections from files..."
+    strip -v "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-"*
 
-    file "transmission-cli" || true
-    readelf -d "transmission-cli" | grep NEEDED || true
-    ldd "transmission-cli" || true
+    # Exit here, if the programs are not statically linked
+    echo ""
+    echo "Checking statically linked programs..."
+    check_static "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-"*
 
-    file "transmission-create" || true
-    readelf -d "transmission-create" | grep NEEDED || true
-    ldd "transmission-create" || true
-
-    file "transmission-daemon" || true
-    readelf -d "transmission-daemon" | grep NEEDED || true
-    ldd "transmission-daemon" || true
-
-    file "transmission-edit" || true
-    readelf -d "transmission-edit" | grep NEEDED || true
-    ldd "transmission-edit" || true
-
-    file "transmission-remote" || true
-    readelf -d "transmission-remote" | grep NEEDED || true
-    ldd "transmission-remote" || true
-
-    file "transmission-show" || true
-    readelf -d "transmission-show" | grep NEEDED || true
-    ldd "transmission-show" || true
-
-    cd $OLDPWD
+    # Append ".static" to the program names
+    echo ""
+    echo "Renaming programs with .static suffix..."
+    for bin in "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-"*; do
+        mv -f "$bin" "$bin.static"
+    done
 
     touch __package_installed
 fi
