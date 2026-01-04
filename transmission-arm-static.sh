@@ -38,9 +38,9 @@ handle_configure_error() {
     find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
 
     # Force failure if rc is zero, since error was detected
-    [ "$rc" -eq 0 ] && return 1
+    [ "${rc}" -eq 0 ] && return 1
 
-    return $rc
+    return ${rc}
 }
 
 ################################################################################
@@ -59,37 +59,37 @@ verify_hash() {
     local option="$3"
     local actual=""
 
-    if [ ! -f "$file" ]; then
-        echo "ERROR: File not found: $file"
+    if [ ! -f "${file}" ]; then
+        echo "ERROR: File not found: ${file}"
         return 1
     fi
 
-    if [ -z "$option" ]; then
+    if [ -z "${option}" ]; then
         # hash the compressed binary file. this method is best when downloading
         # compressed binary files.
-        actual="$(sha256sum "$file" | awk '{print $1}')"
-    elif [ "$option" == "tar_extract" ]; then
+        actual="$(sha256sum "${file}" | awk '{print $1}')"
+    elif [ "${option}" == "tar_extract" ]; then
         # hash the data, file names, directory names. this method is best when
         # archiving Github repos.
-        actual="$(tar -xJOf "$file" | sha256sum | awk '{print $1}')"
-    elif [ "$option" == "xz_extract" ]; then
+        actual="$(tar -xJOf "${file}" | sha256sum | awk '{print $1}')"
+    elif [ "${option}" == "xz_extract" ]; then
         # hash the data, file names, directory names, timestamps, permissions, and
         # tar internal structures. this method is not as "future-proof" for archiving
         # Github repos because it is possible that the tar internal structures
         # could change over time as the tar implementations evolve.
-        actual="$(xz -dc "$file" | sha256sum | awk '{print $1}')"
+        actual="$(xz -dc "${file}" | sha256sum | awk '{print $1}')"
     else
         return 1
     fi
 
-    if [ "$actual" != "$expected" ]; then
-        echo "ERROR: SHA256 mismatch for $file"
-        echo "Expected: $expected"
-        echo "Actual:   $actual"
+    if [ "${actual}" != "${expected}" ]; then
+        echo "ERROR: SHA256 mismatch for ${file}"
+        echo "Expected: ${expected}"
+        echo "Actual:   ${actual}"
         return 1
     fi
 
-    echo "SHA256 OK: $file"
+    echo "SHA256 OK: ${file}"
     return 0
 }
 
@@ -99,7 +99,7 @@ retry() {
     local i=1
     while :; do
         if ! "$@"; then
-            if [ "$i" -ge "$max" ]; then
+            if [ "${i}" -ge "${max}" ]; then
                 return 1
             fi
             i=$((i + 1))
@@ -119,13 +119,13 @@ wget_clean() {
     local source_url="$2"
     local target_path="$3"
 
-    rm -f "$temp_path"
-    if ! wget -O "$temp_path" --tries=9 --retry-connrefused --waitretry=5 "$source_url"; then
-        rm -f "$temp_path"
+    rm -f "${temp_path}"
+    if ! wget -O "${temp_path}" --tries=9 --retry-connrefused --waitretry=5 "${source_url}"; then
+        rm -f "${temp_path}"
         return 1
     else
-        if ! mv -f "$temp_path" "$target_path"; then
-            rm -f "$temp_path" "$target_path"
+        if ! mv -f "${temp_path}" "${target_path}"; then
+            rm -f "${temp_path}" "${target_path}"
             return 1
         fi
     fi
@@ -143,37 +143,37 @@ download()
     local source_url="$1"
     local source="$2"
     local target_dir="$3"
-    local cached_path="${CACHED_DIR}/$source"
-    local target_path="$target_dir/$source"
+    local cached_path="${CACHED_DIR}/${source}"
+    local target_path="${target_dir}/${source}"
     local temp_path=""
 
-    if [ ! -f "$cached_path" ]; then
+    if [ ! -f "${cached_path}" ]; then
         mkdir -p "${CACHED_DIR}"
-        if [ ! -f "$target_path" ]; then
-            cleanup() { rm -f "$cached_path" "$temp_path"; }
+        if [ ! -f "${target_path}" ]; then
+            cleanup() { rm -f "${cached_path}" "${temp_path}"; }
             trap 'cleanup; exit 130' INT
             trap 'cleanup; exit 143' TERM
             trap 'cleanup' EXIT
-            temp_path=$(mktemp "$cached_path.XXXXXX")
-            if ! retry 100 wget_clean "$temp_path" "$source_url" "$cached_path"; then
+            temp_path=$(mktemp "${cached_path}.XXXXXX")
+            if ! retry 100 wget_clean "${temp_path}" "${source_url}" "${cached_path}"; then
                 return 1
             fi
             trap - EXIT INT TERM
         else
-            cleanup() { rm -f "$cached_path"; }
+            cleanup() { rm -f "${cached_path}"; }
             trap 'cleanup; exit 130' INT
             trap 'cleanup; exit 143' TERM
             trap 'cleanup' EXIT
-            if ! mv -f "$target_path" "$cached_path"; then
+            if ! mv -f "${target_path}" "${cached_path}"; then
                 return 1
             fi
             trap - EXIT INT TERM
         fi
     fi
 
-    if [ ! -f "$target_path" ]; then
-        if [ -f "$cached_path" ]; then
-            ln -sfn "$cached_path" "$target_path"
+    if [ ! -f "${target_path}" ]; then
+        if [ -f "${cached_path}" ]; then
+            ln -sfn "${cached_path}" "${target_path}"
         fi
     fi
 
@@ -194,26 +194,26 @@ clone_github()
     local source_subdir="$3"
     local source="$4"
     local target_dir="$5"
-    local cached_path="${CACHED_DIR}/$source"
-    local target_path="$target_dir/$source"
+    local cached_path="${CACHED_DIR}/${source}"
+    local target_path="${target_dir}/${source}"
     local temp_dir=""
     local timestamp=""
 
-    if [ ! -f "$cached_path" ]; then
+    if [ ! -f "${cached_path}" ]; then
         umask 022
         mkdir -p "${CACHED_DIR}"
-        if [ ! -f "$target_path" ]; then
-            cleanup() { rm -rf "$cached_path" "$temp_dir"; }
+        if [ ! -f "${target_path}" ]; then
+            cleanup() { rm -rf "${cached_path}" "${temp_dir}"; }
             trap 'cleanup; exit 130' INT
             trap 'cleanup; exit 143' TERM
             trap 'cleanup' EXIT
-            temp_dir=$(mktemp -d "$target_dir/temp.XXXXXX")
-            mkdir -p "$temp_dir"
-            if ! retry 100 git clone "$source_url" "$temp_dir/$source_subdir"; then
+            temp_dir=$(mktemp -d "${target_dir}/temp.XXXXXX")
+            mkdir -p "${temp_dir}"
+            if ! retry 100 git clone "${source_url}" "${temp_dir}/${source_subdir}"; then
                 return 1
             fi
-            cd "$temp_dir/$source_subdir"
-            if ! retry 100 git checkout $source_version; then
+            cd "${temp_dir}/${source_subdir}"
+            if ! retry 100 git checkout ${source_version}; then
                 return 1
             fi
             if ! retry 100 git submodule update --init --recursive; then
@@ -222,26 +222,26 @@ clone_github()
             timestamp="$(git log -1 --format='@%ct')"
             rm -rf .git
             cd ../..
-            #chmod -R g-w,o-w "$temp_dir/$source_subdir"
-            tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="$timestamp" -cv -C "$temp_dir" "$source_subdir" | xz -zc -7e >"$cached_path"
-            touch -d "$timestamp" "$cached_path"
-            rm -rf "$temp_dir"
+            #chmod -R g-w,o-w "${temp_dir}/${source_subdir}"
+            tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" -cv -C "${temp_dir}" "${source_subdir}" | xz -zc -7e >"${cached_path}"
+            touch -d "${timestamp}" "${cached_path}"
+            rm -rf "${temp_dir}"
             trap - EXIT INT TERM
         else
-            cleanup() { rm -f "$cached_path"; }
+            cleanup() { rm -f "${cached_path}"; }
             trap 'cleanup; exit 130' INT
             trap 'cleanup; exit 143' TERM
             trap 'cleanup' EXIT
-            if ! mv -f "$target_path" "$cached_path"; then
+            if ! mv -f "${target_path}" "${cached_path}"; then
                 return 1
             fi
             trap - EXIT INT TERM
         fi
     fi
 
-    if [ ! -f "$target_path" ]; then
-        if [ -f "$cached_path" ]; then
-            ln -sfn "$cached_path" "$target_path"
+    if [ ! -f "${target_path}" ]; then
+        if [ -f "${cached_path}" ]; then
+            ln -sfn "${cached_path}" "${target_path}"
         fi
     fi
 
@@ -250,13 +250,14 @@ clone_github()
 
 download_archive() {
     [ "$#" -eq 3 ] || [ "$#" -eq 5 ] || return 1
+
     local source_url="$1"
     local source="$2"
     local target_dir="$3"
     local source_version="$4"
     local source_subdir="$5"
 
-    if [ -z "$source_version" ]; then
+    if [ -z "${source_version}" ]; then
         download "${source_url}" "${source}" "${target_dir}"
     else
         clone_github "${source_url}" "${source_version}" "${source_subdir}" "${source}" "${target_dir}"
@@ -270,10 +271,10 @@ apply_patch() {
     local patch_path="$1"
     local target_dir="$2"
 
-    if [ -f "$patch_path" ]; then
-        echo "Applying patch: $patch_path"
-        if patch --dry-run --silent -p1 -d "$target_dir/" -i "$patch_path"; then
-            if ! patch -p1 -d "$target_dir/" -i "$patch_path"; then
+    if [ -f "${patch_path}" ]; then
+        echo "Applying patch: ${patch_path}"
+        if patch --dry-run --silent -p1 -d "${target_dir}/" -i "${patch_path}"; then
+            if ! patch -p1 -d "${target_dir}/" -i "${patch_path}"; then
                 echo "The patch failed."
                 return 1
             fi
@@ -282,7 +283,7 @@ apply_patch() {
             return 1
         fi
     else
-        echo "Patch not found: $patch_path"
+        echo "Patch not found: ${patch_path}"
         return 1
     fi
 
@@ -298,17 +299,17 @@ apply_patch_folder() {
     local patch_file=""
     local rc=0
 
-    if [ -d "$patch_dir" ]; then
-        for patch_file in $patch_dir/*.patch; do
-            if [ -f "$patch_file" ]; then
-                if ! apply_patch "$patch_file" "$target_dir"; then
+    if [ -d "${patch_dir}" ]; then
+        for patch_file in ${patch_dir}/*.patch; do
+            if [ -f "${patch_file}" ]; then
+                if ! apply_patch "${patch_file}" "${target_dir}"; then
                     rc=1
                 fi
             fi
         done
     fi
 
-    return $rc
+    return ${rc}
 }
 
 rm_safe() {
@@ -316,23 +317,23 @@ rm_safe() {
     local target_dir="$1"
 
     # Prevent absolute paths
-    case "$target_dir" in
+    case "${target_dir}" in
         /*)
-            echo "Refusing to remove absolute path: $target_dir"
+            echo "Refusing to remove absolute path: ${target_dir}"
             return 1
             ;;
     esac
 
     # Prevent current/parent directories
-    case "$target_dir" in
+    case "${target_dir}" in
         "."|".."|*/..|*/.)
-            echo "Refusing to remove . or .. or paths containing ..: $target_dir"
+            echo "Refusing to remove . or .. or paths containing ..: ${target_dir}"
             return 1
             ;;
     esac
 
     # Finally, remove safely
-    rm -rf -- "$target_dir"
+    rm -rf -- "${target_dir}"
 
     return 0
 }
@@ -344,8 +345,8 @@ apply_patches() {
     local patch_dir="$1"
     local target_dir="$2"
 
-    if ! apply_patch_folder "$patch_dir" "$target_dir"; then
-        #rm_safe "$target_dir"
+    if ! apply_patch_folder "${patch_dir}" "${target_dir}"; then
+        #rm_safe "${target_dir}"
         return 1
     fi
 
@@ -359,27 +360,27 @@ extract_package() {
     local source_path="$1"
     local target_dir="$2"
 
-    case "$source_path" in
+    case "${source_path}" in
         *.tar.gz|*.tgz)
-            tar xzvf "$source_path" -C "$target_dir"
+            tar xzvf "${source_path}" -C "${target_dir}"
             ;;
         *.tar.bz2|*.tbz)
-            tar xjvf "$source_path" -C "$target_dir"
+            tar xjvf "${source_path}" -C "${target_dir}"
             ;;
         *.tar.xz|*.txz)
-            tar xJvf "$source_path" -C "$target_dir"
+            tar xJvf "${source_path}" -C "${target_dir}"
             ;;
         *.tar.lz|*.tlz)
-            tar xlvf "$source_path" -C "$target_dir"
+            tar xlvf "${source_path}" -C "${target_dir}"
             ;;
         *.tar.zst)
-            tar xvf "$source_path" -C "$target_dir"
+            tar xvf "${source_path}" -C "${target_dir}"
             ;;
         *.tar)
-            tar xvf "$source_path" -C "$target_dir"
+            tar xvf "${source_path}" -C "${target_dir}"
             ;;
         *)
-            echo "Unsupported archive type: $source_path" >&2
+            echo "Unsupported archive type: ${source_path}" >&2
             return 1
             ;;
     esac
@@ -396,19 +397,19 @@ unpack_archive()
     local target_dir="$2"
     local dir_tmp=""
 
-    if [ ! -d "$target_dir" ]; then
-        dir_tmp=$(mktemp -d "$target_dir.XXXXXX")
-        cleanup() { rm -rf "$dir_tmp"; }
+    if [ ! -d "${target_dir}" ]; then
+        dir_tmp=$(mktemp -d "${target_dir}.XXXXXX")
+        cleanup() { rm -rf "${dir_tmp}"; }
         trap 'cleanup; exit 130' INT
         trap 'cleanup; exit 143' TERM
         trap 'cleanup' EXIT
-        mkdir -p "$dir_tmp"
-        if extract_package "$source_path" "$dir_tmp"; then
+        mkdir -p "${dir_tmp}"
+        if extract_package "${source_path}" "${dir_tmp}"; then
             # try to rename single sub-directory
-            if ! mv -f "$dir_tmp"/* "$target_dir"/; then
+            if ! mv -f "${dir_tmp}"/* "${target_dir}"/; then
                 # otherwise, move multiple files and sub-directories
-                mkdir -p "$target_dir"
-                mv -f "$dir_tmp"/* "$target_dir"/
+                mkdir -p "${target_dir}"
+                mv -f "${dir_tmp}"/* "${target_dir}"/
             fi
         fi
     fi
@@ -433,7 +434,7 @@ update_patch_library() {
     [ -n "$3" ] || return 1
     [ -n "$4" ] || return 1
     [ -n "${PARENT_DIR}" ] || return 1
-    [ -n "$SCRIPT_DIR" ] || return 1
+    [ -n "${SCRIPT_DIR}" ] || return 1
 
     local git_commit="$1"
     local patches_dir="$2"
@@ -441,15 +442,15 @@ update_patch_library() {
     local pkg_subdir="$4"
     local entware_packages_dir="${PARENT_DIR}/entware-packages"
 
-    if [ ! -d "$entware_packages_dir" ]; then
+    if [ ! -d "${entware_packages_dir}" ]; then
         cd "${PARENT_DIR}"
         git clone https://github.com/Entware/entware-packages
     fi
 
-    cd "$entware_packages_dir"
+    cd "${entware_packages_dir}"
     git fetch origin
-    git reset --hard "$git_commit"
-    [ -d "$patches_dir" ] || return 1
+    git reset --hard "${git_commit}"
+    [ -d "${patches_dir}" ] || return 1
     mkdir -p "${SCRIPT_DIR}/patches/${pkg_name}/${pkg_subdir}/entware"
     cp -pf "${patches_dir}"/* "${SCRIPT_DIR}/patches/${pkg_name}/${pkg_subdir}/entware/"
     cd ..
@@ -474,9 +475,9 @@ if [ ! -d "${TOMATOWARE_PATH}" ]; then
     echo ""
     cd ${PARENT_DIR}
     TOMATOWARE_PKG_PATH="${CACHED_DIR}/${TOMATOWARE_PKG}"
-    download "${TOMATOWARE_PKG_SOURCE_URL}" "${TOMATOWARE_PKG}" "${CACHED_DIR}"
+    download_archive "${TOMATOWARE_PKG_SOURCE_URL}" "${TOMATOWARE_PKG}" "${CACHED_DIR}"
     verify_hash "${TOMATOWARE_PKG_PATH}" "${TOMATOWARE_PKG_HASH}"
-    unpack_archive "${TOMATOWARE_PKG_PATH}" "$TOMATOWARE_DIR"
+    unpack_archive "${TOMATOWARE_PKG_PATH}" "${TOMATOWARE_DIR}"
 fi
 
 # Check if /mmc exists and is a symbolic link
@@ -503,7 +504,7 @@ fi
 
 # Check shell
 if [ "$BASH" != "${TOMATOWARE_SYSROOT}/bin/bash" ]; then
-    if [ -z "$TOMATOWARE_SHELL" ]; then
+    if [ -z "${TOMATOWARE_SHELL}" ]; then
         export TOMATOWARE_SHELL=1
         exec "${TOMATOWARE_SYSROOT}/bin/bash" "${PATH_CMD}" "$@"
     else
@@ -530,15 +531,7 @@ BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="4.0.6"
 #BUILD_TRANSMISSION_VERSION="4.0.6+git"
 
-#CLANG="clang --gcc-toolchain=${TOMATOWARE_SYSROOT}"
-#export CC="${CLANG}"
-#export LDFLAGS="-L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -Wl,--gc-sections"
-#export CPPFLAGS="-isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
-#export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
-
-#LDFLAGS_TARGET="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -Wl,--gc-sections"
-#CPPFLAGS_TARGET="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
-#CFLAGS_TARGET="-march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -O3 -pipe -Wall -fPIC -std=gnu99"
+#export CC="clang --gcc-toolchain=${TOMATOWARE_SYSROOT}"
 
 export LDFLAGS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -Wl,--gc-sections"
 export CPPFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
@@ -549,14 +542,12 @@ MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 
 export PATH="${TOMATOWARE_SYSROOT}/usr/bin:${TOMATOWARE_SYSROOT}/usr/local/sbin:${TOMATOWARE_SYSROOT}/usr/local/bin:${TOMATOWARE_SYSROOT}/usr/sbin:${TOMATOWARE_SYSROOT}/sbin:${TOMATOWARE_SYSROOT}/bin"
 
-#export PKG_CONFIG="pkg-config --static"
 export PKG_CONFIG="pkg-config"
 export PKG_CONFIG_LIBDIR="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/pkgconfig"
 #export PKG_CONFIG_PATH="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/pkgconfig:${TOMATOWARE_SYSROOT}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
 ln -sfn ${TOMATOWARE_SYSROOT}/bin/bash ${TOMATOWARE_SYSROOT}/bin/sh
-#mv libcurl.so* libevent.so* libssl.so* libcrypto.so* libzstd.so* libz.so* __removed/
 
 # get patches (only needs to be run once by me, then keep it commented out)
 #update_patch_library "3895f460ea7e7a99eeff7ed65447e70a34a8eda6" "net/transmission/patches" "transmission" "transmission-3.00"
@@ -587,7 +578,7 @@ fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
@@ -682,7 +673,7 @@ fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
@@ -738,10 +729,9 @@ if $REBUILD_ALL; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-rm -rf "${PKG_SOURCE_SUBDIR}"
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
@@ -749,19 +739,14 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export LDFLAGS="${LDFLAGS}"
     export CPPFLAGS="${CPPFLAGS}"
     export CFLAGS="${CFLAGS}"
-    #export LIBS="\
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a \
-    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a \
-    #"
 
     export LIBS="-lssl -lcrypto -lzstd -lz"
 
+    LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --enable-static \
         --disable-shared \
-        --prefix="${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
         --disable-debug \
         --disable-curldebug \
         --enable-http \
@@ -783,8 +768,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --with-openssl="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
     || handle_configure_error $?
 
-    $MAKE
-    make install DESTDIR="${STAGEDIR}"
+    $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
+    make install DESTDIR=""
 
     # strip and verify there are no dependencies for static build
     cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
@@ -797,7 +782,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-exit 1
 
 ################################################################################
 # libevent-2.1.12
@@ -820,7 +804,7 @@ fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
@@ -870,9 +854,10 @@ if $REBUILD_ALL; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
+rm -rf "${PKG_SOURCE_SUBDIR}"
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
@@ -906,6 +891,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     #export ZLIB_CFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include"
     #export ZLIB_LIBS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -lz"
 
+    LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --enable-static \
         --disable-shared \
@@ -992,7 +978,7 @@ if $REBUILD_ALL; then
 fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
@@ -1040,7 +1026,7 @@ if $REBUILD_ALL; then
 fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
@@ -1077,7 +1063,7 @@ if $REBUILD_ALL; then
 fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
