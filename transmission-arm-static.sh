@@ -133,21 +133,22 @@ wget_clean() {
     return 0
 }
 
-download() ( # BEGIN sub-shell
+download()
+( # BEGIN sub-shell
     [ -n "$1" ]          || return 1
     [ -n "$2" ]          || return 1
     [ -n "$3" ]          || return 1
-    [ -n "$CACHED_DIR" ] || return 1
+    [ -n "${CACHED_DIR}" ] || return 1
 
     local source_url="$1"
     local source="$2"
     local target_dir="$3"
-    local cached_path="$CACHED_DIR/$source"
+    local cached_path="${CACHED_DIR}/$source"
     local target_path="$target_dir/$source"
     local temp_path=""
 
     if [ ! -f "$cached_path" ]; then
-        mkdir -p "$CACHED_DIR"
+        mkdir -p "${CACHED_DIR}"
         if [ ! -f "$target_path" ]; then
             cleanup() { rm -f "$cached_path" "$temp_path"; }
             trap 'cleanup; exit 130' INT
@@ -179,27 +180,28 @@ download() ( # BEGIN sub-shell
     return 0
 ) # END sub-shell
 
-clone_to_archive() ( # BEGIN sub-shell
+clone_github()
+( # BEGIN sub-shell
     [ -n "$1" ]          || return 1
     [ -n "$2" ]          || return 1
     [ -n "$3" ]          || return 1
     [ -n "$4" ]          || return 1
     [ -n "$5" ]          || return 1
-    [ -n "$CACHED_DIR" ] || return 1
+    [ -n "${CACHED_DIR}" ] || return 1
 
     local source_url="$1"
     local source_version="$2"
     local source_subdir="$3"
     local source="$4"
     local target_dir="$5"
-    local cached_path="$CACHED_DIR/$source"
+    local cached_path="${CACHED_DIR}/$source"
     local target_path="$target_dir/$source"
     local temp_dir=""
     local timestamp=""
 
     if [ ! -f "$cached_path" ]; then
         umask 022
-        mkdir -p "$CACHED_DIR"
+        mkdir -p "${CACHED_DIR}"
         if [ ! -f "$target_path" ]; then
             cleanup() { rm -rf "$cached_path" "$temp_dir"; }
             trap 'cleanup; exit 130' INT
@@ -245,6 +247,21 @@ clone_to_archive() ( # BEGIN sub-shell
 
     return 0
 ) # END sub-shell
+
+download_archive() {
+    [ "$#" -eq 3 ] || [ "$#" -eq 5 ] || return 1
+    local source_url="$1"
+    local source="$2"
+    local target_dir="$3"
+    local source_version="$4"
+    local source_subdir="$5"
+
+    if [ -z "$source_version" ]; then
+        download "${source_url}" "${source}" "${target_dir}"
+    else
+        clone_github "${source_url}" "${source_version}" "${source_subdir}" "${source}" "${target_dir}"
+    fi
+}
 
 apply_patch() {
     [ -n "$1" ] || return 1
@@ -370,7 +387,8 @@ extract_package() {
     return 0
 }
 
-unpack_archive() ( # BEGIN sub-shell
+unpack_archive()
+( # BEGIN sub-shell
     [ -n "$1" ] || return 1
     [ -n "$2" ] || return 1
 
@@ -414,17 +432,17 @@ update_patch_library() {
     [ -n "$2" ] || return 1
     [ -n "$3" ] || return 1
     [ -n "$4" ] || return 1
-    [ -n "$PARENT_DIR" ] || return 1
+    [ -n "${PARENT_DIR}" ] || return 1
     [ -n "$SCRIPT_DIR" ] || return 1
 
     local git_commit="$1"
     local patches_dir="$2"
     local pkg_name="$3"
     local pkg_subdir="$4"
-    local entware_packages_dir="$PARENT_DIR/entware-packages"
+    local entware_packages_dir="${PARENT_DIR}/entware-packages"
 
     if [ ! -d "$entware_packages_dir" ]; then
-        cd "$PARENT_DIR"
+        cd "${PARENT_DIR}"
         git clone https://github.com/Entware/entware-packages
     fi
 
@@ -451,43 +469,43 @@ TOMATOWARE_PATH="${PARENT_DIR}/${TOMATOWARE_DIR}"
 TOMATOWARE_SYSROOT="/mmc" # or, whatever your tomatoware distribution uses for sysroot
 
 # Check if Tomatoware exists and install it, if needed
-if [ ! -d "$TOMATOWARE_PATH" ]; then
-    echo "Tomatoware not found at $TOMATOWARE_PATH. Installing..."
+if [ ! -d "${TOMATOWARE_PATH}" ]; then
+    echo "Tomatoware not found at ${TOMATOWARE_PATH}. Installing..."
     echo ""
-    cd $PARENT_DIR
-    TOMATOWARE_PKG_PATH="$CACHED_DIR/$TOMATOWARE_PKG"
-    download "$TOMATOWARE_PKG_SOURCE_URL" "$TOMATOWARE_PKG" "$CACHED_DIR"
-    verify_hash "$TOMATOWARE_PKG_PATH" "$TOMATOWARE_PKG_HASH"
-    unpack_archive "$TOMATOWARE_PKG_PATH" "$TOMATOWARE_DIR"
+    cd ${PARENT_DIR}
+    TOMATOWARE_PKG_PATH="${CACHED_DIR}/${TOMATOWARE_PKG}"
+    download "${TOMATOWARE_PKG_SOURCE_URL}" "${TOMATOWARE_PKG}" "${CACHED_DIR}"
+    verify_hash "${TOMATOWARE_PKG_PATH}" "${TOMATOWARE_PKG_HASH}"
+    unpack_archive "${TOMATOWARE_PKG_PATH}" "$TOMATOWARE_DIR"
 fi
 
 # Check if /mmc exists and is a symbolic link
-if [ ! -L "$TOMATOWARE_SYSROOT" ] && ! grep -q " $TOMATOWARE_SYSROOT " /proc/mounts; then
-    echo "Tomatoware $TOMATOWARE_SYSROOT is missing or is not a symbolic link."
+if [ ! -L "${TOMATOWARE_SYSROOT}" ] && ! grep -q " ${TOMATOWARE_SYSROOT} " /proc/mounts; then
+    echo "Tomatoware ${TOMATOWARE_SYSROOT} is missing or is not a symbolic link."
     echo ""
     # try making a symlink
-    if ! sudo ln -sfn "$TOMATOWARE_PATH" "$TOMATOWARE_SYSROOT"; then
+    if ! sudo ln -sfn "${TOMATOWARE_PATH}" "${TOMATOWARE_SYSROOT}"; then
         # otherwise, we are probably on a read-only filesystem and
         # the sysroot needs to be already baked into the firmware and
         # not in use by something else.
         # alternatively, you can figure out another sysroot to use.
-        mount -o bind "$TOMATOWARE_PATH" "$TOMATOWARE_SYSROOT"
+        mount -o bind "${TOMATOWARE_PATH}" "${TOMATOWARE_SYSROOT}"
     fi
 fi
 
 # Check for required Tomatoware tools
-if [ ! -x "$TOMATOWARE_SYSROOT/bin/gcc" ] || [ ! -x "$TOMATOWARE_SYSROOT/bin/make" ]; then
+if [ ! -x "${TOMATOWARE_SYSROOT}/bin/gcc" ] || [ ! -x "${TOMATOWARE_SYSROOT}/bin/make" ]; then
     echo "ERROR: Tomatoware installation appears incomplete."
-    echo "Missing gcc or make in $TOMATOWARE_SYSROOT/bin."
+    echo "Missing gcc or make in ${TOMATOWARE_SYSROOT}/bin."
     echo ""
     exit 1
 fi
 
 # Check shell
-if [ "$BASH" != "$TOMATOWARE_SYSROOT/bin/bash" ]; then
+if [ "$BASH" != "${TOMATOWARE_SYSROOT}/bin/bash" ]; then
     if [ -z "$TOMATOWARE_SHELL" ]; then
         export TOMATOWARE_SHELL=1
-        exec "$TOMATOWARE_SYSROOT/bin/bash" "$PATH_CMD" "$@"
+        exec "${TOMATOWARE_SYSROOT}/bin/bash" "${PATH_CMD}" "$@"
     else
         echo "ERROR: Not Tomatoware shell: $(readlink /proc/$$/exe)"
         echo ""
@@ -502,20 +520,34 @@ echo "Now running under: $(readlink /proc/$$/exe)"
 # General
 
 PKG_ROOT=transmission
+STAGEDIR="${TOMATOWARE_SYSROOT}/staging/${PKG_ROOT}"
+SRC_ROOT="${TOMATOWARE_SYSROOT}/src/${PKG_ROOT}"
+mkdir -p "$SRC_ROOT"
+
 REBUILD_ALL=false
 BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="3.00+git"
 #BUILD_TRANSMISSION_VERSION="4.0.6"
 #BUILD_TRANSMISSION_VERSION="4.0.6+git"
-STAGEDIR="${TOMATOWARE_SYSROOT}/staging/${PKG_ROOT}"
-LDFLAGS_TARGET="-L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -Wl,--gc-sections"
-CPPFLAGS_TARGET="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
-CFLAGS_TARGET="-march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -ffixed-r8 -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -O3 -pipe -Wall -fPIC -std=gnu99"
-SRC_ROOT="${TOMATOWARE_SYSROOT}/src/${PKG_ROOT}"
-mkdir -p "$SRC_ROOT"
+
+#CLANG="clang --gcc-toolchain=${TOMATOWARE_SYSROOT}"
+#export CC="${CLANG}"
+#export LDFLAGS="-L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -Wl,--gc-sections"
+#export CPPFLAGS="-isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
+#export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
+
+#LDFLAGS_TARGET="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -Wl,--gc-sections"
+#CPPFLAGS_TARGET="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
+#CFLAGS_TARGET="-march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -O3 -pipe -Wall -fPIC -std=gnu99"
+
+export LDFLAGS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -Wl,--gc-sections"
+export CPPFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
+export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
+
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
-export PATH="$TOMATOWARE_SYSROOT/usr/bin:$TOMATOWARE_SYSROOT/usr/local/sbin:$TOMATOWARE_SYSROOT/usr/local/bin:$TOMATOWARE_SYSROOT/usr/sbin:$TOMATOWARE_SYSROOT/sbin:$TOMATOWARE_SYSROOT/bin"
+
+export PATH="${TOMATOWARE_SYSROOT}/usr/bin:${TOMATOWARE_SYSROOT}/usr/local/sbin:${TOMATOWARE_SYSROOT}/usr/local/bin:${TOMATOWARE_SYSROOT}/usr/sbin:${TOMATOWARE_SYSROOT}/sbin:${TOMATOWARE_SYSROOT}/bin"
 
 #export PKG_CONFIG="pkg-config --static"
 export PKG_CONFIG="pkg-config"
@@ -523,7 +555,7 @@ export PKG_CONFIG_LIBDIR="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/pkgconfig"
 #export PKG_CONFIG_PATH="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/pkgconfig:${TOMATOWARE_SYSROOT}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
-ln -sfn /mmc/bin/bash /mmc/bin/sh
+ln -sfn ${TOMATOWARE_SYSROOT}/bin/bash ${TOMATOWARE_SYSROOT}/bin/sh
 #mv libcurl.so* libevent.so* libssl.so* libcrypto.so* libzstd.so* libz.so* __removed/
 
 # get patches (only needs to be run once by me, then keep it commented out)
@@ -536,7 +568,7 @@ ln -sfn /mmc/bin/bash /mmc/bin/sh
 if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
 ################################################################################
 # zlib-1.3.1
-
+(
 PKG_NAME=zlib
 PKG_VERSION=1.3.1
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
@@ -547,39 +579,34 @@ PKG_HASH="38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
-
-    (
-    export LDFLAGS="${LDFLAGS_TARGET}"
-    export CPPFLAGS="${CPPFLAGS_TARGET}"
-    export CFLAGS="${CFLAGS_TARGET}"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
     ./configure \
         --static \
-        --prefix="$TOMATOWARE_SYSROOT" \
+        --prefix="${TOMATOWARE_SYSROOT}" \
     || handle_configure_error $?
 
     $MAKE
     make install DESTDIR="${STAGEDIR}"
-    )
 
     touch __package_installed
 fi
+)
 
 ################################################################################
 # zstd-1.5.7
-
+(
 PKG_NAME=zstd
 PKG_VERSION=1.5.7
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
@@ -587,40 +614,56 @@ PKG_SOURCE_URL="https://github.com/facebook/zstd/releases/download/v${PKG_VERSIO
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
 
+#PKG_NAME=zstd
+#PKG_VERSION="1.5.7+git"
+#PKG_SOURCE_URL="https://github.com/facebook/zstd.git"
+#PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+#PKG_SOURCE_VERSION="f8745da6ff1ad1e7bab384bd1f9d742439278e99"
+#PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.xz"
+#PKG_HASH_VERIFY="tar_extract"
+#PKG_HASH="ae83002690aba91a210f3efc2dbf00aee5266f9b68f47b1130c95dd6a1a48e4b"
+
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
-    export LDFLAGS="${LDFLAGS_TARGET}"
-    export CPPFLAGS="${CPPFLAGS_TARGET}"
-    export CFLAGS="${CFLAGS_TARGET}"
+    $MAKE zstd \
+        LDFLAGS="-static ${LDFLAGS}" \
+        CFLAGS="${CFLAGS}" \
+        LIBS="${TOMATOWARE_SYSROOT}/lib/libz.a ${TOMATOWARE_SYSROOT}/lib/liblzma.a ${TOMATOWARE_SYSROOT}/lib/liblz4.a"
 
-    $MAKE
     make install DESTDIR="${STAGEDIR}" \
                  PREFIX="${TOMATOWARE_SYSROOT}"
 
     rm -f "${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.so"*
-    )
+
+    # strip and verify there are no dependencies for static build
+    cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
+    strip "zstd"
+    file "zstd"
+    readelf -d "zstd" | grep NEEDED || true
+    ldd "zstd" || true
+    cd $OLDPWD
 
     touch __package_installed
 fi
+)
 
 ################################################################################
 # openssl-3.6.0
-
+(
 PKG_NAME=openssl
 PKG_VERSION=3.6.0
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
@@ -631,23 +674,22 @@ PKG_HASH="b6a5f44b7eb69e3fa35dbf15524405b44837a481d43d81daddde3ff21fcbb8e9"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
-    export LDFLAGS="-static ${LDFLAGS_TARGET}"
-    export CPPFLAGS="${CPPFLAGS_TARGET}"
-    export CFLAGS="${CFLAGS_TARGET}"
+    export LDFLAGS="-static ${LDFLAGS}"
+    export CPPFLAGS="${CPPFLAGS}"
+    export CFLAGS="${CFLAGS}"
     #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a"
     export LIBS="-lzstd -lz"
 
@@ -656,6 +698,7 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         no-shared no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
         no-err no-async \
         no-aria no-sm2 no-sm3 no-sm4 \
+        no-dso no-ssl3 no-comp \
         enable-rc5 \
         --prefix="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
         --with-rand-seed=devrandom \
@@ -663,21 +706,22 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     $MAKE
     make install DESTDIR=""
-    )
 
     # strip and verify there are no dependencies for static build
     cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
     strip "openssl"
     file "openssl"
     readelf -d "openssl" | grep NEEDED || true
+    ldd "openssl" || true
     cd $OLDPWD
 
     touch __package_installed
 fi
+)
 
 ################################################################################
 # curl-8.17.0
-
+(
 PKG_NAME=curl
 PKG_VERSION=8.17.0
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
@@ -688,31 +732,36 @@ PKG_HASH="955f6e729ad6b3566260e8fef68620e76ba3c31acf0a18524416a185acf77992"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-rm -rf "$PKG_SOURCE_SUBDIR"
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+rm -rf "${PKG_SOURCE_SUBDIR}"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
-    export LDFLAGS="-static ${LDFLAGS_TARGET}"
-    export CPPFLAGS="${CPPFLAGS_TARGET}"
-    export CFLAGS="${CFLAGS_TARGET}"
-    #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a"
+    export LDFLAGS="${LDFLAGS}"
+    export CPPFLAGS="${CPPFLAGS}"
+    export CFLAGS="${CFLAGS}"
+    #export LIBS="\
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a \
+    #"
+
     export LIBS="-lssl -lcrypto -lzstd -lz"
 
     ./configure \
         --enable-static \
         --disable-shared \
-        --prefix="$TOMATOWARE_SYSROOT" \
+        --prefix="${TOMATOWARE_SYSROOT}" \
         --disable-debug \
         --disable-curldebug \
         --enable-http \
@@ -736,22 +785,23 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     $MAKE
     make install DESTDIR="${STAGEDIR}"
-    )
 
     # strip and verify there are no dependencies for static build
     cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
     strip "curl"
-    file "curl"
+    file "curl" || true
     readelf -d "curl" | grep NEEDED || true
+    ldd "curl" || true
     cd $OLDPWD
 
     touch __package_installed
 fi
+)
 exit 1
 
 ################################################################################
 # libevent-2.1.12
-
+(
 PKG_NAME=libevent
 PKG_VERSION=2.1.12
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-stable.tar.gz"
@@ -762,30 +812,29 @@ PKG_HASH="92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
-    export LDFLAGS="${LDFLAGS_TARGET}"
-    export CPPFLAGS="${CPPFLAGS_TARGET}"
-    export CFLAGS="${CFLAGS_TARGET}"
+    export LDFLAGS="${LDFLAGS}"
+    export CPPFLAGS="${CPPFLAGS}"
+    export CFLAGS="${CFLAGS}"
     #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a"
     export LIBS="-lssl -lcrypto"
 
     ./configure \
         --enable-static \
         --disable-shared \
-        --prefix="$TOMATOWARE_SYSROOT" \
+        --prefix="${TOMATOWARE_SYSROOT}" \
         --disable-debug-mode \
         --disable-libevent-regress \
         --disable-samples \
@@ -797,14 +846,14 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     $MAKE
     find . -name '*.la' -delete
     make install DESTDIR="${STAGEDIR}"
-    )
 
     touch __package_installed
 fi
+)
 
 ################################################################################
 # transmission-3.00
-
+(
 PKG_NAME=transmission
 PKG_VERSION=3.00
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
@@ -815,25 +864,34 @@ PKG_HASH="9144652fe742f7f7dd6657716e378da60b751aaeda8bef8344b3eefc4db255f2"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    rm -rf "$PKG_SOURCE_SUBDIR"
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
-    export LDFLAGS="${LDFLAGS_TARGET}"
-    export CPPFLAGS="${CPPFLAGS_TARGET}"
-    export CFLAGS="${CFLAGS_TARGET}"
+    #export LDFLAGS="${LDFLAGS}"
+    #export CPPFLAGS="${CPPFLAGS}"
+    #export CFLAGS="${CFLAGS}"
     #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcurl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libevent.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a"
+
+    #export LIBS=" \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcurl.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libevent.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a \
+    #    ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a \
+    #"
+
     #export LIBS="-lcurl -lzstd -levent -lssl -lcrypto -lz"
     #export LIBS="-latomic -lssl -lcrypto -lz -levent -lcurl -lm -ldl -pthread"
     #export LIBS="-latomic -pthread"
@@ -865,9 +923,8 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     $MAKE
     make install DESTDIR="${STAGEDIR}"
-    )
 
-    #cd "/$TOMATOWARE_SYSROOT/staging/opt/static/bin"
+    #cd "/${TOMATOWARE_SYSROOT}/staging/opt/static/bin"
     cd "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin"
     strip "transmission-cli"
     strip "transmission-create"
@@ -881,30 +938,43 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     #mv -f transmission-edit transmission-edit.static
     #mv -f transmission-remote transmission-remote.static
     #mv -f transmission-show transmission-show.static
-    file "transmission-cli"
+
+    file "transmission-cli" || true
     readelf -d "transmission-cli" | grep NEEDED || true
-    file "transmission-create"
+    ldd "transmission-cli" || true
+
+    file "transmission-create" || true
     readelf -d "transmission-create" | grep NEEDED || true
-    file "transmission-daemon"
+    ldd "transmission-create" || true
+
+    file "transmission-daemon" || true
     readelf -d "transmission-daemon" | grep NEEDED || true
-    file "transmission-edit"
+    ldd "transmission-daemon" || true
+
+    file "transmission-edit" || true
     readelf -d "transmission-edit" | grep NEEDED || true
-    file "transmission-remote"
+    ldd "transmission-edit" || true
+
+    file "transmission-remote" || true
     readelf -d "transmission-remote" | grep NEEDED || true
-    file "transmission-show"
+    ldd "transmission-remote" || true
+
+    file "transmission-show" || true
     readelf -d "transmission-show" | grep NEEDED || true
+    ldd "transmission-show" || true
+
     cd $OLDPWD
 
     touch __package_installed
 fi
+)
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]
-
 
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]; then
 ################################################################################
 # transmission-4.0.6
-
+(
 PKG_NAME=transmission
 PKG_VERSION=4.0.6
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
@@ -915,25 +985,24 @@ PKG_HASH="2a38fe6d8a23991680b691c277a335f8875bdeca2b97c6b26b598bc9c7b0c45f"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/build/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR/build" && make uninstall && cd ../..
+    if [ -f "${PKG_SOURCE_SUBDIR}/build/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}/build" && make uninstall && cd ../..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
     rm -rf build && mkdir -p build && cd build
 
-    (
     cmake \
-      -DCMAKE_INSTALL_PREFIX="$TOMATOWARE_SYSROOT" \
-      -DCMAKE_PREFIX_PATH="$TOMATOWARE_SYSROOT" \
+      -DCMAKE_INSTALL_PREFIX="${TOMATOWARE_SYSROOT}" \
+      -DCMAKE_PREFIX_PATH="${TOMATOWARE_SYSROOT}" \
       -DENABLE_STATIC=ON \
       -DENABLE_SHARED=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON \
@@ -941,20 +1010,19 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     $MAKE
     make install DESTDIR="${STAGEDIR}"
-    )
 
     cd ..
 
     touch __package_installed
 fi
+)
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]
-
 
 
 if is_version_git "$BUILD_TRANSMISSION_VERSION"; then
 ################################################################################
 # XML-Parser-2.47
-
+(
 PKG_NAME=XML-Parser
 PKG_VERSION=2.47
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
@@ -965,19 +1033,18 @@ PKG_HASH="ad4aae643ec784f489b956abe952432871a622d4e2b5c619e8855accbfc4d1d8"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
     perl Makefile.PL \
         EXPATLIBPATH=/mmc/lib \
         EXPATINCPATH=/mmc/include
@@ -985,14 +1052,14 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
     $MAKE
     make test
     make install
-    )
 
     touch __package_installed
 fi
+)
 
 ################################################################################
 # intltool-0.51.0
-
+(
 PKG_NAME=intltool
 PKG_VERSION=0.51.0
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
@@ -1003,37 +1070,35 @@ PKG_HASH="67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    download "$PKG_SOURCE_URL" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    download "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
     ./configure \
-        --prefix="$TOMATOWARE_SYSROOT" \
+        --prefix="${TOMATOWARE_SYSROOT}" \
     || handle_configure_error $?
 
     $MAKE
     make install
-    )
 
     touch __package_installed
 fi
+)
 fi # if is_version_git "$BUILD_TRANSMISSION_VERSION"
-
 
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "3.00+git" ]; then
 ################################################################################
 # transmission-3.00+git
-
+(
 PKG_NAME=transmission
 PKG_VERSION="3.00+git"
 PKG_SOURCE_URL="https://github.com/transmission/transmission.git"
@@ -1046,20 +1111,19 @@ PKG_HASH="84bf5f638e6cb20f63a037f7c29695576d786c35e3d8be2e21f4cdf6a0e419f4"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR" && make uninstall && cd ..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    clone_to_archive "$PKG_SOURCE_URL" "$PKG_SOURCE_VERSION" "$PKG_SOURCE_SUBDIR" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH" "$PKG_HASH_VERIFY"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
-    (
     ./autogen.sh
 
     ./configure \
@@ -1074,24 +1138,23 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --prefix="$TOMATOWARE_SYSROOT" \
-        --with-sysroot="$TOMATOWARE_SYSROOT" \
+        --prefix="${TOMATOWARE_SYSROOT}" \
+        --with-sysroot="${TOMATOWARE_SYSROOT}" \
     || handle_configure_error $?
 
     $MAKE
     make install DESTDIR="${STAGEDIR}"
-    )
 
     touch __package_installed
 fi
+)
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00+git" ]
-
 
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6+git" ]; then
 ################################################################################
 # transmission-4.0.6+git
-
+(
 PKG_NAME=transmission
 PKG_VERSION="4.0.6+git"
 PKG_SOURCE_URL="https://github.com/transmission/transmission.git"
@@ -1104,25 +1167,24 @@ PKG_HASH="08ed7249432db3ed8cf9ad57eac0cf0ece81f53fcf8952248bc0e0ddd48419e4"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "$PKG_SOURCE_SUBDIR/build/Makefile" ]; then
-        cd "$PKG_SOURCE_SUBDIR/build" && make uninstall && cd ../..
+    if [ -f "${PKG_SOURCE_SUBDIR}/build/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}/build" && make uninstall && cd ../..
     fi
-    rm -rf "$PKG_SOURCE_SUBDIR"
+    rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
-if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
-    clone_to_archive "$PKG_SOURCE_URL" "$PKG_SOURCE_VERSION" "$PKG_SOURCE_SUBDIR" "$PKG_SOURCE" "."
-    verify_hash "$PKG_SOURCE" "$PKG_HASH" "$PKG_HASH_VERIFY"
-    unpack_archive "$PKG_SOURCE" "$PKG_SOURCE_SUBDIR"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "$PKG_SOURCE_SUBDIR"
-    cd "$PKG_SOURCE_SUBDIR"
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
 
     rm -rf build && mkdir -p build && cd build
 
-    (
     cmake \
-      -DCMAKE_INSTALL_PREFIX="$TOMATOWARE_SYSROOT" \
-      -DCMAKE_PREFIX_PATH="$TOMATOWARE_SYSROOT" \
+      -DCMAKE_INSTALL_PREFIX="${TOMATOWARE_SYSROOT}" \
+      -DCMAKE_PREFIX_PATH="${TOMATOWARE_SYSROOT}" \
       -DENABLE_STATIC=ON \
       -DENABLE_SHARED=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON \
@@ -1130,11 +1192,11 @@ if [ ! -f "$PKG_SOURCE_SUBDIR/__package_installed" ]; then
 
     $MAKE
     make install DESTDIR="${STAGEDIR}"
-    )
 
     cd ..
 
     touch __package_installed
 fi
+)
 fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6+git" ]
 
