@@ -574,8 +574,8 @@ BUILD_TRANSMISSION_VERSION="3.00"
 
 #export CC="clang --gcc-toolchain=${TOMATOWARE_SYSROOT}"
 
-export LDFLAGS="-L${STAGEDIR}${TOMATOWARE_SYSROOT}/lib -L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -Wl,--gc-sections"
-export CPPFLAGS="-I${STAGEDIR}${TOMATOWARE_SYSROOT}/include -isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
+export LDFLAGS="-L${STAGEDIR}/lib -L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -Wl,--gc-sections"
+export CPPFLAGS="-I${STAGEDIR}/include -isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
 export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
@@ -584,8 +584,8 @@ MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 export PATH="${TOMATOWARE_SYSROOT}/usr/bin:${TOMATOWARE_SYSROOT}/usr/local/sbin:${TOMATOWARE_SYSROOT}/usr/local/bin:${TOMATOWARE_SYSROOT}/usr/sbin:${TOMATOWARE_SYSROOT}/sbin:${TOMATOWARE_SYSROOT}/bin"
 
 export PKG_CONFIG="pkg-config"
-export PKG_CONFIG_LIBDIR="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/pkgconfig"
-#export PKG_CONFIG_PATH="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/pkgconfig:${TOMATOWARE_SYSROOT}/lib/pkgconfig"
+export PKG_CONFIG_LIBDIR="${STAGEDIR}/lib/pkgconfig"
+#export PKG_CONFIG_PATH="${STAGEDIR}/lib/pkgconfig:${TOMATOWARE_SYSROOT}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
 ln -sfn ${TOMATOWARE_SYSROOT}/bin/bash ${TOMATOWARE_SYSROOT}/bin/sh
@@ -596,6 +596,81 @@ ln -sfn ${TOMATOWARE_SYSROOT}/bin/bash ${TOMATOWARE_SYSROOT}/bin/sh
 #update_patch_library "594346b9325c7f5d07c60c2e9727cfe83e768067" "net/transmission/patches" "transmission" "transmission-4.0.6"
 #ln -sfn "transmission-4.0.6" "${SCRIPT_DIR}/patches/transmission/transmission-4.0.6+git" 
 
+
+if [ "$BUILD_TRANSMISSION_VERSION" = "uClibc-ng" ]; then
+################################################################################
+# linux-2.6.36.4
+(
+PKG_NAME=linux
+PKG_VERSION=2.6.36.4
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://www.kernel.org/pub/linux/kernel/v$(echo "$PKG_VERSION" | cut -d. -f1,2)/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="70d124743041974e1220fb39465627ded1df0fdd46da6cd74f6e3da414194d03"
+
+LINUX_HEADERS_SUBDIR="linux-headers-${PKG_VERSION}"
+LINUX_HEADERS_PATH="${STAGEDIR}/usr/src/${LINUX_HEADERS_SUBDIR}"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+
+if $REBUILD_ALL; then
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
+    fi
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+fi
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    make headers_install INSTALL_HDR_PATH="${LINUX_HEADERS_PATH}"
+
+    touch __package_installed
+fi
+
+ln -sfn "${LINUX_HEADERS_SUBDIR}" "${STAGEDIR}/usr/src/linux-headers"
+)
+
+################################################################################
+# uClibc-ng-1.0.37
+(
+PKG_NAME=uClibc-ng
+PKG_VERSION=1.0.37
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://downloads.uclibc-ng.org/releases/${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="b2b815d20645cf604b99728202bf3ecb62507ce39dfa647884b4453caf86212c"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+
+if $REBUILD_ALL; then
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
+    fi
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+fi
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/.config" .
+
+    make clean
+    $MAKE
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
+
+    touch __package_installed
+fi
+)
+fi
 
 if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
 ################################################################################
@@ -626,11 +701,11 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     ./configure \
         --static \
-        --prefix="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}" \
     || handle_configure_error $?
 
     $MAKE
-    make install DESTDIR=""
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     touch __package_installed
 fi
@@ -674,15 +749,14 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     $MAKE zstd \
         LDFLAGS="-static ${LDFLAGS}" \
         CFLAGS="${CFLAGS}" \
-        LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a ${TOMATOWARE_SYSROOT}/lib/liblzma.a ${TOMATOWARE_SYSROOT}/lib/liblz4.a"
+        LIBS="${STAGEDIR}/lib/libz.a ${TOMATOWARE_SYSROOT}/lib/liblzma.a ${TOMATOWARE_SYSROOT}/lib/liblz4.a"
 
-    make install DESTDIR="" \
-                 PREFIX="${STAGEDIR}${TOMATOWARE_SYSROOT}"
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
-    rm -f "${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.so"*
+    rm -f "${STAGEDIR}/lib/libzstd.so"*
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/zstd"
+    finalize_build "${STAGEDIR}/bin/zstd"
 
     touch __package_installed
 fi
@@ -717,7 +791,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export LDFLAGS="-static ${LDFLAGS}"
     export CPPFLAGS="${CPPFLAGS}"
     export CFLAGS="${CFLAGS}"
-    #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libzstd.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libz.a"
+    #export LIBS="${STAGEDIR}/lib/libzstd.a ${STAGEDIR}/lib/libz.a"
     export LIBS="-lzstd -lz"
 
     ./Configure linux-armv4 \
@@ -727,15 +801,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         no-aria no-sm2 no-sm3 no-sm4 \
         no-dso no-ssl3 no-comp \
         enable-rc5 \
-        --prefix="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}" \
         --with-rand-seed=devrandom \
         -DOPENSSL_PREFER_CHACHA_OVER_GCM
 
     $MAKE
-    make install DESTDIR=""
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/openssl"
+    finalize_build "${STAGEDIR}/bin/openssl"
 
     touch __package_installed
 fi
@@ -777,7 +851,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     ./configure \
         --enable-static \
         --disable-shared \
-        --prefix="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}" \
         --disable-debug \
         --disable-curldebug \
         --enable-http \
@@ -794,16 +868,16 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-rt \
         --disable-docs \
         --without-libpsl \
-        --with-zlib="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
-        --with-zstd="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
-        --with-openssl="${STAGEDIR}${TOMATOWARE_SYSROOT}" \
+        --with-zlib="${STAGEDIR}" \
+        --with-zstd="${STAGEDIR}" \
+        --with-openssl="${STAGEDIR}" \
     || handle_configure_error $?
 
     $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
-    make install DESTDIR=""
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/curl"
+    finalize_build "${STAGEDIR}/bin/curl"
 
     touch __package_installed
 fi
@@ -838,13 +912,13 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export LDFLAGS="${LDFLAGS}"
     export CPPFLAGS="${CPPFLAGS}"
     export CFLAGS="${CFLAGS}"
-    #export LIBS="${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libssl.a ${STAGEDIR}${TOMATOWARE_SYSROOT}/lib/libcrypto.a"
+    #export LIBS="${STAGEDIR}/lib/libssl.a ${STAGEDIR}/lib/libcrypto.a"
     export LIBS="-lssl -lcrypto"
 
     ./configure \
         --enable-static \
         --disable-shared \
-        --prefix="${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}" \
         --disable-debug-mode \
         --disable-libevent-regress \
         --disable-samples \
@@ -855,7 +929,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     $MAKE
     find . -name '*.la' -delete
-    make install DESTDIR="${STAGEDIR}"
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     touch __package_installed
 fi
@@ -903,20 +977,20 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --prefix="${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}" \
     || handle_configure_error $?
 
     $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
-    make install DESTDIR="${STAGEDIR}"
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     # strip and verify there are no dependencies for static build
     finalize_build \
-        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-cli" \
-        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-create" \
-        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-daemon" \
-        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-edit" \
-        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-remote" \
-        "${STAGEDIR}${TOMATOWARE_SYSROOT}/bin/transmission-show"
+        "${STAGEDIR}/bin/transmission-cli" \
+        "${STAGEDIR}/bin/transmission-create" \
+        "${STAGEDIR}/bin/transmission-daemon" \
+        "${STAGEDIR}/bin/transmission-edit" \
+        "${STAGEDIR}/bin/transmission-remote" \
+        "${STAGEDIR}/bin/transmission-show"
 
     touch __package_installed
 fi
@@ -954,15 +1028,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf build && mkdir -p build && cd build
 
     cmake \
-      -DCMAKE_INSTALL_PREFIX="${TOMATOWARE_SYSROOT}" \
-      -DCMAKE_PREFIX_PATH="${TOMATOWARE_SYSROOT}" \
+      -DCMAKE_INSTALL_PREFIX="${STAGEDIR}" \
+      -DCMAKE_PREFIX_PATH="${STAGEDIR}" \
       -DENABLE_STATIC=ON \
       -DENABLE_SHARED=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON \
       ../
 
     $MAKE
-    make install DESTDIR="${STAGEDIR}"
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     cd ..
 
@@ -1091,12 +1165,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --prefix="${TOMATOWARE_SYSROOT}" \
-        --with-sysroot="${TOMATOWARE_SYSROOT}" \
+        --prefix="${STAGEDIR}" \
+        --with-sysroot="${STAGEDIR}" \
     || handle_configure_error $?
 
     $MAKE
-    make install DESTDIR="${STAGEDIR}"
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     touch __package_installed
 fi
@@ -1136,15 +1210,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf build && mkdir -p build && cd build
 
     cmake \
-      -DCMAKE_INSTALL_PREFIX="${TOMATOWARE_SYSROOT}" \
-      -DCMAKE_PREFIX_PATH="${TOMATOWARE_SYSROOT}" \
+      -DCMAKE_INSTALL_PREFIX="${STAGEDIR}" \
+      -DCMAKE_PREFIX_PATH="${STAGEDIR}" \
       -DENABLE_STATIC=ON \
       -DENABLE_SHARED=OFF \
       -DCMAKE_VERBOSE_MAKEFILE=ON \
       ../
 
     $MAKE
-    make install DESTDIR="${STAGEDIR}"
+    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     cd ..
 
