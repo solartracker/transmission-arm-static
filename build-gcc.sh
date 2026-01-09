@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# transmission-arm-static.sh
+# build-gcc.sh
 #
 # Copyright (C) 2025 Richard Elwell
 #
@@ -501,112 +501,45 @@ finalize_build() {
 }
 
 ################################################################################
-# Install the build environment
-
-TOMATOWARE_PKG_SOURCE_URL="https://github.com/lancethepants/tomatoware/releases/download/v5.0/arm-soft-mmc.tgz"
-TOMATOWARE_PKG_HASH="ff490819a16f5ddb80ec095342ac005a444b6ebcd3ed982b8879134b2b036fcc"
-TOMATOWARE_PKG="arm-soft-mmc-5.0.tgz"
-TOMATOWARE_DIR="tomatoware-5.0"
-TOMATOWARE_PATH="${PARENT_DIR}/${TOMATOWARE_DIR}"
-TOMATOWARE_SYSROOT="/mmc" # or, whatever your tomatoware distribution uses for sysroot
-
-# Check if Tomatoware exists and install it, if needed
-if [ ! -d "${TOMATOWARE_PATH}" ]; then
-    echo "Tomatoware not found at ${TOMATOWARE_PATH}. Installing..."
-    echo ""
-    cd ${PARENT_DIR}
-    TOMATOWARE_PKG_PATH="${CACHED_DIR}/${TOMATOWARE_PKG}"
-    download_archive "${TOMATOWARE_PKG_SOURCE_URL}" "${TOMATOWARE_PKG}" "${CACHED_DIR}"
-    verify_hash "${TOMATOWARE_PKG_PATH}" "${TOMATOWARE_PKG_HASH}"
-    unpack_archive "${TOMATOWARE_PKG_PATH}" "${TOMATOWARE_DIR}"
-fi
-
-# Check if /mmc exists and is a symbolic link
-if [ ! -L "${TOMATOWARE_SYSROOT}" ] && ! grep -q " ${TOMATOWARE_SYSROOT} " /proc/mounts; then
-    echo "Tomatoware ${TOMATOWARE_SYSROOT} is missing or is not a symbolic link."
-    echo ""
-    # try making a symlink
-    if ! sudo ln -sfn "${TOMATOWARE_PATH}" "${TOMATOWARE_SYSROOT}"; then
-        # otherwise, we are probably on a read-only filesystem and
-        # the sysroot needs to be already baked into the firmware and
-        # not in use by something else.
-        # alternatively, you can figure out another sysroot to use.
-        mount -o bind "${TOMATOWARE_PATH}" "${TOMATOWARE_SYSROOT}"
-    fi
-fi
-
-# Check for required Tomatoware tools
-if [ ! -x "${TOMATOWARE_SYSROOT}/bin/gcc" ] || [ ! -x "${TOMATOWARE_SYSROOT}/bin/make" ]; then
-    echo "ERROR: Tomatoware installation appears incomplete."
-    echo "Missing gcc or make in ${TOMATOWARE_SYSROOT}/bin."
-    echo ""
-    exit 1
-fi
-
-# Check shell
-if [ "$BASH" != "${TOMATOWARE_SYSROOT}/bin/bash" ]; then
-    if [ -z "${TOMATOWARE_SHELL}" ]; then
-        export TOMATOWARE_SHELL=1
-        exec "${TOMATOWARE_SYSROOT}/bin/bash" "${PATH_CMD}" "$@"
-    else
-        echo "ERROR: Not Tomatoware shell: $(readlink /proc/$$/exe)"
-        echo ""
-        exit 1
-    fi
-fi
-
-# ---- From here down, you are running under /mmc/bin/bash ----
-echo "Now running under: $(readlink /proc/$$/exe)"
-
-################################################################################
 # General
 
-PKG_ROOT=transmission
-STAGEDIR="${TOMATOWARE_SYSROOT}/staging/${PKG_ROOT}"
-SRC_ROOT="${TOMATOWARE_SYSROOT}/src/${PKG_ROOT}"
+XCC=/xcc
+mkdir -p "${HOME}/build-devtools"
+sudo ln -sfn "${HOME}/build-devtools" "${XCC}"
+
+STAGEDIR="${XCC}"
+SRC_ROOT="${XCC}/src"
 mkdir -p "$SRC_ROOT"
 
 REBUILD_ALL=false
-BUILD_TRANSMISSION_VERSION="3.00"
-#BUILD_TRANSMISSION_VERSION="3.00+git"
-#BUILD_TRANSMISSION_VERSION="4.0.6"
-#BUILD_TRANSMISSION_VERSION="4.0.6+git"
 
-#export CC="clang --gcc-toolchain=${TOMATOWARE_SYSROOT}"
-
-export LDFLAGS="-L${STAGEDIR}/lib -L${TOMATOWARE_SYSROOT}/lib/gcc/arm-tomatoware-linux-uclibcgnueabi/12.2.0 -Wl,--gc-sections"
-export CPPFLAGS="-I${STAGEDIR}/include -isystem ${TOMATOWARE_SYSROOT}/lib/gcc/armv7a-tomatoware-linux-gnueabi/12.2.0/include -D_GNU_SOURCE -D__ARM_ARCH_7A__ -DL_ENDIAN"
-export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
+#export LDFLAGS="-L${STAGEDIR}/lib -Wl,--gc-sections"
+#export CPPFLAGS="-I${STAGEDIR}/include"
+#export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -fomit-frame-pointer -mabi=aapcs-linux -marm -msoft-float -mfloat-abi=soft -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
 
-export PATH="${TOMATOWARE_SYSROOT}/usr/bin:${TOMATOWARE_SYSROOT}/usr/local/sbin:${TOMATOWARE_SYSROOT}/usr/local/bin:${TOMATOWARE_SYSROOT}/usr/sbin:${TOMATOWARE_SYSROOT}/sbin:${TOMATOWARE_SYSROOT}/bin"
+#export PKG_CONFIG="pkg-config"
+#export PKG_CONFIG_LIBDIR="${STAGEDIR}/lib/pkgconfig"
+#unset PKG_CONFIG_PATH
 
-export PKG_CONFIG="pkg-config"
-export PKG_CONFIG_LIBDIR="${STAGEDIR}/lib/pkgconfig"
-#export PKG_CONFIG_PATH="${STAGEDIR}/lib/pkgconfig:${TOMATOWARE_SYSROOT}/lib/pkgconfig"
-unset PKG_CONFIG_PATH
+export PREFIX="${STAGEDIR}"
+export TARGET=armv7l-linux-musleabi
+export PATH="$PREFIX/bin:$PATH"
 
-ln -sfn ${TOMATOWARE_SYSROOT}/bin/bash ${TOMATOWARE_SYSROOT}/bin/sh
+# sudo apt update && sudo apt install build-essential binutils bison flex texinfo gawk make perl patch file wget curl git libgmp-dev libmpfr-dev libmpc-dev libisl-dev zlib1g-dev
 
-# get patches (only needs to be run once by me, then keep it commented out)
-#update_patch_library "3895f460ea7e7a99eeff7ed65447e70a34a8eda6" "net/transmission/patches" "transmission" "transmission-3.00"
-#ln -sfn "transmission-3.00" "${SCRIPT_DIR}/patches/transmission/transmission-3.00+git" 
-#update_patch_library "594346b9325c7f5d07c60c2e9727cfe83e768067" "net/transmission/patches" "transmission" "transmission-4.0.6"
-#ln -sfn "transmission-4.0.6" "${SCRIPT_DIR}/patches/transmission/transmission-4.0.6+git" 
-
-
-if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
+if false; then
 ################################################################################
-# zlib-1.3.1
+# uClibc-ng-1.0.37
 (
-PKG_NAME=zlib
-PKG_VERSION=1.3.1
+PKG_NAME=uClibc-ng
+PKG_VERSION=1.0.37
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://github.com/madler/zlib/releases/download/v${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_URL="https://downloads.uclibc-ng.org/releases/${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32"
+PKG_HASH="b2b815d20645cf604b99728202bf3ecb62507ce39dfa647884b4453caf86212c"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
@@ -623,395 +556,27 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    ./configure \
-        --static \
-        --prefix="${STAGEDIR}" \
-    || handle_configure_error $?
+    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/.config" .
 
+    make clean
     $MAKE
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    touch __package_installed
-fi
-)
-
-################################################################################
-# zstd-1.5.7
-(
-PKG_NAME=zstd
-PKG_VERSION=1.5.7
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://github.com/facebook/zstd/releases/download/v${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
-
-#PKG_NAME=zstd
-#PKG_VERSION="1.5.7+git"
-#PKG_SOURCE_URL="https://github.com/facebook/zstd.git"
-#PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-#PKG_SOURCE_VERSION="f8745da6ff1ad1e7bab384bd1f9d742439278e99"
-#PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.xz"
-#PKG_HASH_VERIFY="tar_extract"
-#PKG_HASH="ae83002690aba91a210f3efc2dbf00aee5266f9b68f47b1130c95dd6a1a48e4b"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    $MAKE zstd \
-        LDFLAGS="-static ${LDFLAGS}" \
-        CFLAGS="${CFLAGS}" \
-        LIBS="${STAGEDIR}/lib/libz.a ${TOMATOWARE_SYSROOT}/lib/liblzma.a ${TOMATOWARE_SYSROOT}/lib/liblz4.a"
-
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    rm -f "${STAGEDIR}/lib/libzstd.so"*
-
-    # strip and verify there are no dependencies for static build
-    finalize_build "${STAGEDIR}/bin/zstd"
-
-    touch __package_installed
-fi
-)
-
-################################################################################
-# openssl-3.6.0
-(
-PKG_NAME=openssl
-PKG_VERSION=3.6.0
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://github.com/openssl/openssl/releases/download/openssl-${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="b6a5f44b7eb69e3fa35dbf15524405b44837a481d43d81daddde3ff21fcbb8e9"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    export LDFLAGS="-static ${LDFLAGS}"
-    export CPPFLAGS="${CPPFLAGS}"
-    export CFLAGS="${CFLAGS}"
-    #export LIBS="${STAGEDIR}/lib/libzstd.a ${STAGEDIR}/lib/libz.a"
-    export LIBS="-lzstd -lz"
-
-    ./Configure linux-armv4 \
-        enable-zlib enable-zstd no-zlib-dynamic \
-        no-shared no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
-        no-err no-async \
-        no-aria no-sm2 no-sm3 no-sm4 \
-        no-dso no-ssl3 no-comp \
-        enable-rc5 \
-        --prefix="${STAGEDIR}" \
-        --with-rand-seed=devrandom \
-        -DOPENSSL_PREFER_CHACHA_OVER_GCM
-
-    $MAKE
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    # strip and verify there are no dependencies for static build
-    finalize_build "${STAGEDIR}/bin/openssl"
-
-    touch __package_installed
-fi
-)
-
-################################################################################
-# curl-8.17.0
-(
-PKG_NAME=curl
-PKG_VERSION=8.17.0
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://github.com/curl/curl/releases/download/curl-${PKG_VERSION//./_}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="955f6e729ad6b3566260e8fef68620e76ba3c31acf0a18524416a185acf77992"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    export LDFLAGS="${LDFLAGS}"
-    export CPPFLAGS="${CPPFLAGS}"
-    export CFLAGS="${CFLAGS}"
-
-    export LIBS="-lssl -lcrypto -lzstd -lz"
-
-    LDFLAGS="-static ${LDFLAGS}" \
-    ./configure \
-        --enable-static \
-        --disable-shared \
-        --prefix="${STAGEDIR}" \
-        --disable-debug \
-        --disable-curldebug \
-        --enable-http \
-        --disable-gopher \
-        --disable-dict \
-        --disable-telnet \
-        --disable-manual \
-        --disable-libcurl-option \
-        --disable-threaded-resolver \
-        --with-ca-bundle="/etc/ssl/certs/ca-certificates.crt" \
-        --disable-dependency-tracking \
-        --enable-optimize \
-        --disable-silent-rules \
-        --disable-rt \
-        --disable-docs \
-        --without-libpsl \
-        --with-zlib="${STAGEDIR}" \
-        --with-zstd="${STAGEDIR}" \
-        --with-openssl="${STAGEDIR}" \
-    || handle_configure_error $?
-
-    $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    # strip and verify there are no dependencies for static build
-    finalize_build "${STAGEDIR}/bin/curl"
-
-    touch __package_installed
-fi
-)
-
-################################################################################
-# libevent-2.1.12
-(
-PKG_NAME=libevent
-PKG_VERSION=2.1.12
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-stable.tar.gz"
-PKG_SOURCE_URL="https://github.com/libevent/libevent/releases/download/release-${PKG_VERSION}-stable/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    export LDFLAGS="${LDFLAGS}"
-    export CPPFLAGS="${CPPFLAGS}"
-    export CFLAGS="${CFLAGS}"
-    #export LIBS="${STAGEDIR}/lib/libssl.a ${STAGEDIR}/lib/libcrypto.a"
-    export LIBS="-lssl -lcrypto"
-
-    ./configure \
-        --enable-static \
-        --disable-shared \
-        --prefix="${STAGEDIR}" \
-        --disable-debug-mode \
-        --disable-libevent-regress \
-        --disable-samples \
-        --enable-function-sections \
-        --disable-dependency-tracking \
-        --disable-doxygen-doc \
-    || handle_configure_error $?
-
-    $MAKE
-    find . -name '*.la' -delete
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    touch __package_installed
-fi
-)
-
-################################################################################
-# transmission-3.00
-(
-PKG_NAME=transmission
-PKG_VERSION=3.00
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://github.com/transmission/transmission/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="9144652fe742f7f7dd6657716e378da60b751aaeda8bef8344b3eefc4db255f2"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt ${TOMATOWARE_SYSROOT}/lib/libatomic.a"
-
-    LDFLAGS="-static ${LDFLAGS}" \
-    ./configure \
-        --enable-static \
-        --disable-shared \
-        --disable-nls \
-        --disable-silent-rules \
-        --disable-dependency-tracking \
-        --enable-daemon \
-        --enable-cli \
-        --without-gtk \
-        --enable-largefile \
-        --enable-lightweight \
-        --with-crypto=openssl \
-        --prefix="${STAGEDIR}" \
-    || handle_configure_error $?
-
-    $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    # strip and verify there are no dependencies for static build
-    finalize_build \
-        "${STAGEDIR}/bin/transmission-cli" \
-        "${STAGEDIR}/bin/transmission-create" \
-        "${STAGEDIR}/bin/transmission-daemon" \
-        "${STAGEDIR}/bin/transmission-edit" \
-        "${STAGEDIR}/bin/transmission-remote" \
-        "${STAGEDIR}/bin/transmission-show"
-
-    touch __package_installed
-fi
-)
-fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]
-
-
-if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]; then
-################################################################################
-# transmission-4.0.6
-(
-PKG_NAME=transmission
-PKG_VERSION=4.0.6
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://github.com/transmission/transmission/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="2a38fe6d8a23991680b691c277a335f8875bdeca2b97c6b26b598bc9c7b0c45f"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/build/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}/build" && make uninstall && cd ../..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    rm -rf build && mkdir -p build && cd build
-
-    cmake \
-      -DCMAKE_INSTALL_PREFIX="${STAGEDIR}" \
-      -DCMAKE_PREFIX_PATH="${STAGEDIR}" \
-      -DENABLE_STATIC=ON \
-      -DENABLE_SHARED=OFF \
-      -DCMAKE_VERBOSE_MAKEFILE=ON \
-      ../
-
-    $MAKE
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    cd ..
-
-    touch __package_installed
-fi
-)
-fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]
-
-
-if is_version_git "$BUILD_TRANSMISSION_VERSION"; then
-################################################################################
-# XML-Parser-2.47
-(
-PKG_NAME=XML-Parser
-PKG_VERSION=2.47
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://cpan.metacpan.org/authors/id/T/TO/TODDR/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="ad4aae643ec784f489b956abe952432871a622d4e2b5c619e8855accbfc4d1d8"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    perl Makefile.PL \
-        EXPATLIBPATH=/mmc/lib \
-        EXPATINCPATH=/mmc/include
-
-    $MAKE
-    make test
     make install
+#    make install DESTDIR="" PREFIX="${STAGEDIR}"
 
     touch __package_installed
 fi
 )
+fi # if false
 
 ################################################################################
-# intltool-0.51.0
+# binutils-2.40
 (
-PKG_NAME=intltool
-PKG_VERSION=0.51.0
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://launchpad.net/intltool/trunk/${PKG_VERSION}/+download/${PKG_SOURCE}"
+PKG_NAME=binutils
+PKG_VERSION=2.40
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/binutils/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd"
+PKG_HASH="0f8a4c272d7f17f369ded10a4aca28b8e304828e95526da482b0ccc4dfc9d8e1"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
@@ -1029,7 +594,11 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     ./configure \
-        --prefix="${TOMATOWARE_SYSROOT}" \
+        --target=${TARGET} \
+        --prefix="${PREFIX}" \
+        --with-sysroot \
+        --disable-nls \
+        --disable-werror \
     || handle_configure_error $?
 
     $MAKE
@@ -1038,21 +607,70 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if is_version_git "$BUILD_TRANSMISSION_VERSION"
 
-
-if [ "$BUILD_TRANSMISSION_VERSION" = "3.00+git" ]; then
 ################################################################################
-# transmission-3.00+git
+# gcc-12.5.0 (bootstrap)
 (
-PKG_NAME=transmission
-PKG_VERSION="3.00+git"
-PKG_SOURCE_URL="https://github.com/transmission/transmission.git"
+PKG_NAME=gcc
+PKG_VERSION=12.5.0
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_SOURCE_VERSION="bb6b5a062ee594dfd4b7a12a6b6e860c43849bfd"
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.xz"
-PKG_HASH_VERIFY="tar_extract"
-PKG_HASH="84bf5f638e6cb20f63a037f7c29695576d786c35e3d8be2e21f4cdf6a0e419f4"
+PKG_HASH="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+
+if $REBUILD_ALL; then
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
+    fi
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+fi
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}-build-bootstrap/__package_installed" ]; then
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+
+    # to compile gcc, my Pi 3B needed an SSD, 2GB swapfile, and copper shims
+    # on the heatsink
+
+    rm -rf "${PKG_SOURCE_SUBDIR}-build-bootstrap"
+    mkdir "${PKG_SOURCE_SUBDIR}-build-bootstrap"
+    cd "${PKG_SOURCE_SUBDIR}-build-bootstrap"
+
+    ../${PKG_SOURCE_SUBDIR}/configure \
+        --target=${TARGET} \
+        --prefix="${PREFIX}" \
+        --disable-nls \
+        --without-headers \
+        --enable-languages=c \
+        --disable-shared \
+        --disable-threads \
+        --disable-libatomic \
+        --disable-libgomp \
+        --disable-libquadmath \
+        --disable-libssp \
+        --disable-libstdcxx \
+        --disable-multilib \
+    || handle_configure_error $?
+
+    $MAKE all-gcc
+    make install-gcc
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# linux-2.6.36.4
+(
+PKG_NAME=linux
+PKG_VERSION=2.6.36.4
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://www.kernel.org/pub/linux/kernel/v$(echo "$PKG_VERSION" | cut -d. -f1,2)/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="70d124743041974e1220fb39465627ded1df0fdd46da6cd74f6e3da414194d03"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
@@ -1064,85 +682,90 @@ if $REBUILD_ALL; then
 fi
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    ./autogen.sh
-
-    ./configure \
-        --enable-static \
-        --disable-shared \
-        --disable-nls \
-        --disable-silent-rules \
-        --disable-dependency-tracking \
-        --enable-daemon \
-        --enable-cli \
-        --without-gtk \
-        --enable-largefile \
-        --enable-lightweight \
-        --with-crypto=openssl \
-        --prefix="${STAGEDIR}" \
-        --with-sysroot="${STAGEDIR}" \
-    || handle_configure_error $?
-
-    $MAKE
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
+    make ARCH=arm INSTALL_HDR_PATH="${PREFIX}/usr" headers_install
 
     touch __package_installed
 fi
 )
-fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00+git" ]
 
-
-if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6+git" ]; then
 ################################################################################
-# transmission-4.0.6+git
+# musl-1.2.4
 (
-PKG_NAME=transmission
-PKG_VERSION="4.0.6+git"
-PKG_SOURCE_URL="https://github.com/transmission/transmission.git"
+PKG_NAME=musl
+PKG_VERSION=1.2.4
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://musl.libc.org/releases/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_SOURCE_VERSION="38c164933e9f77c110b48fe745861c3b98e3d83e"
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.xz"
-PKG_HASH_VERIFY="tar_extract"
-PKG_HASH="08ed7249432db3ed8cf9ad57eac0cf0ece81f53fcf8952248bc0e0ddd48419e4"
+PKG_HASH="7a35eae33d5372a7c0da1188de798726f68825513b7ae3ebe97aaaa52114f039"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/build/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}/build" && make uninstall && cd ../..
+    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
+        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
     fi
     rm -rf "${PKG_SOURCE_SUBDIR}"
 fi
 
+rm -rf "${PKG_SOURCE_SUBDIR}"
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}" "${PKG_HASH_VERIFY}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    rm -rf build && mkdir -p build && cd build
-
-    cmake \
-      -DCMAKE_INSTALL_PREFIX="${STAGEDIR}" \
-      -DCMAKE_PREFIX_PATH="${STAGEDIR}" \
-      -DENABLE_STATIC=ON \
-      -DENABLE_SHARED=OFF \
-      -DCMAKE_VERBOSE_MAKEFILE=ON \
-      ../
+    ./configure \
+        --prefix=/ \
+        --syslibdir=/lib \
+        --enable-static \
+        --disable-shared \
+    || handle_configure_error $?
 
     $MAKE
-    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    cd ..
+    make install DESTDIR="${PREFIX}/${TARGET}"
 
     touch __package_installed
 fi
 )
-fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6+git" ]
+
+################################################################################
+# gcc-12.5.0 (final)
+(
+PKG_NAME=gcc
+PKG_VERSION=12.5.0
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}-build-final/__package_installed" ]; then
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+
+    rm -rf "${PKG_SOURCE_SUBDIR}-build-final"
+    mkdir "${PKG_SOURCE_SUBDIR}-build-final"
+    cd "${PKG_SOURCE_SUBDIR}-build-final"
+
+    ../${PKG_SOURCE_SUBDIR}/configure \
+        --target=${TARGET} \
+        --prefix="${PREFIX}" \
+        --disable-nls \
+        --enable-languages=c,c++ \
+        --with-sysroot="${PREFIX}/${TARGET}" \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    touch __package_installed
+fi
+)
 
