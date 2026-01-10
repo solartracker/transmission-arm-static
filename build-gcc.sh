@@ -525,48 +525,11 @@ MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #unset PKG_CONFIG_PATH
 
 export PREFIX="${STAGEDIR}"
-export TARGET=armv7l-linux-musleabi
+#export TARGET=armv7l-linux-musleabi
+export TARGET=arm-linux-musleabi
 export PATH="$PREFIX/bin:$PATH"
 
 # sudo apt update && sudo apt install build-essential binutils bison flex texinfo gawk make perl patch file wget curl git libgmp-dev libmpfr-dev libmpc-dev libisl-dev zlib1g-dev
-
-if false; then
-################################################################################
-# uClibc-ng-1.0.37
-(
-PKG_NAME=uClibc-ng
-PKG_VERSION=1.0.37
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://downloads.uclibc-ng.org/releases/${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="b2b815d20645cf604b99728202bf3ecb62507ce39dfa647884b4453caf86212c"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/.config" .
-
-    make clean
-    $MAKE
-    make install
-#    make install DESTDIR="" PREFIX="${STAGEDIR}"
-
-    touch __package_installed
-fi
-)
-fi # if false
 
 ################################################################################
 # binutils-2.40
@@ -576,27 +539,23 @@ PKG_VERSION=2.40
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE_URL="https://ftp.gnu.org/gnu/binutils/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build"
 PKG_HASH="0f8a4c272d7f17f369ded10a4aca28b8e304828e95526da482b0ccc4dfc9d8e1"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
 
-    ./configure \
-        --target=${TARGET} \
+    rm -rf "${PKG_BUILD_SUBDIR}"
+    mkdir "${PKG_BUILD_SUBDIR}"
+    cd "${PKG_BUILD_SUBDIR}"
+
+    ../${PKG_SOURCE_SUBDIR}/configure \
         --prefix="${PREFIX}" \
-        --with-sysroot \
+        --target=${TARGET} \
         --disable-nls \
         --disable-werror \
     || handle_configure_error $?
@@ -604,61 +563,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     $MAKE
     make install
 
-    touch __package_installed
-fi
-)
-
-################################################################################
-# gcc-12.5.0 (bootstrap)
-(
-PKG_NAME=gcc
-PKG_VERSION=12.5.0
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
-
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}-build-bootstrap/__package_installed" ]; then
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-
-    # to compile gcc, my Pi 3B needed an SSD, 2GB swapfile, and copper shims
-    # on the heatsink
-
-    rm -rf "${PKG_SOURCE_SUBDIR}-build-bootstrap"
-    mkdir "${PKG_SOURCE_SUBDIR}-build-bootstrap"
-    cd "${PKG_SOURCE_SUBDIR}-build-bootstrap"
-
-    ../${PKG_SOURCE_SUBDIR}/configure \
-        --target=${TARGET} \
-        --prefix="${PREFIX}" \
-        --disable-nls \
-        --without-headers \
-        --enable-languages=c \
-        --disable-shared \
-        --disable-threads \
-        --disable-libatomic \
-        --disable-libgomp \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx \
-        --disable-multilib \
-    || handle_configure_error $?
-
-    $MAKE all-gcc
-    make install-gcc
-
-    touch __package_installed
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed"
 fi
 )
 
@@ -670,26 +575,78 @@ PKG_VERSION=2.6.36.4
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE_URL="https://www.kernel.org/pub/linux/kernel/v$(echo "$PKG_VERSION" | cut -d. -f1,2)/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build"
 PKG_HASH="70d124743041974e1220fb39465627ded1df0fdd46da6cd74f6e3da414194d03"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+
+    rm -rf "${PKG_BUILD_SUBDIR}"
+    mkdir "${PKG_BUILD_SUBDIR}"
+
     cd "${PKG_SOURCE_SUBDIR}"
+    make ARCH=arm INSTALL_HDR_PATH="${PREFIX}/${TARGET}/usr" headers_install
 
-    make ARCH=arm INSTALL_HDR_PATH="${PREFIX}/usr" headers_install
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed"
+fi
+)
 
-    touch __package_installed
+################################################################################
+# gcc-12.5.0 (bootstrap)
+(
+PKG_NAME=gcc
+PKG_VERSION=12.5.0
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-bootstrap"
+PKG_HASH="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+
+    # to compile gcc, my Pi 3B needed an SSD, 2GB swapfile, and copper shims
+    # with thermal paste between the SoC and aluminum heatsink case
+
+    rm -rf "${PKG_BUILD_SUBDIR}"
+    mkdir "${PKG_BUILD_SUBDIR}"
+    cd "${PKG_BUILD_SUBDIR}"
+
+    ../${PKG_SOURCE_SUBDIR}/configure \
+        --target=${TARGET} \
+        --prefix="${PREFIX}" \
+        --without-headers \
+        --enable-languages=c \
+        --disable-threads \
+        --disable-libgcov \
+        --disable-shared \
+        --enable-threads=single \
+        --disable-multilib \
+        --disable-nls \
+        --disable-libssp \
+        --disable-libquadmath \
+        --disable-libgomp \
+        --disable-libsanitizer \
+        --disable-libstdcxx-pch \
+    || handle_configure_error $?
+
+    $MAKE all-gcc
+    make install-gcc
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed__gcc"
+
+    $MAKE all-target-libgcc
+    make install-target-libgcc
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed__libgcc"
+
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed"
 fi
 )
 
@@ -701,35 +658,32 @@ PKG_VERSION=1.2.4
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
 PKG_SOURCE_URL="https://musl.libc.org/releases/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build"
 PKG_HASH="7a35eae33d5372a7c0da1188de798726f68825513b7ae3ebe97aaaa52114f039"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
-if $REBUILD_ALL; then
-    if [ -f "${PKG_SOURCE_SUBDIR}/Makefile" ]; then
-        cd "${PKG_SOURCE_SUBDIR}" && make uninstall && cd ..
-    fi
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-fi
-
-rm -rf "${PKG_SOURCE_SUBDIR}"
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
 
-    ./configure \
-        --prefix=/ \
+    rm -rf "${PKG_BUILD_SUBDIR}"
+    mkdir "${PKG_BUILD_SUBDIR}"
+    cd "${PKG_BUILD_SUBDIR}"
+
+    CC=$TARGET-gcc \
+    ../${PKG_SOURCE_SUBDIR}/configure \
+        --prefix="${PREFIX}/${TARGET}" \
+        --target=${TARGET} \
         --syslibdir=/lib \
-        --enable-static \
-        --disable-shared \
+        --with-headers="${PREFIX}/${TARGET}/include" \
     || handle_configure_error $?
 
     $MAKE
-    make install DESTDIR="${PREFIX}/${TARGET}"
+    make install
 
-    touch __package_installed
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed"
 fi
 )
 
@@ -741,31 +695,34 @@ PKG_VERSION=12.5.0
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE_URL="https://ftp.gnu.org/gnu/gcc/${PKG_NAME}-${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-final"
 PKG_HASH="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
-if [ ! -f "${PKG_SOURCE_SUBDIR}-build-final/__package_installed" ]; then
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
 
-    rm -rf "${PKG_SOURCE_SUBDIR}-build-final"
-    mkdir "${PKG_SOURCE_SUBDIR}-build-final"
-    cd "${PKG_SOURCE_SUBDIR}-build-final"
+    rm -rf "${PKG_BUILD_SUBDIR}"
+    mkdir "${PKG_BUILD_SUBDIR}"
+    cd "${PKG_BUILD_SUBDIR}"
 
     ../${PKG_SOURCE_SUBDIR}/configure \
         --target=${TARGET} \
         --prefix="${PREFIX}" \
-        --disable-nls \
-        --enable-languages=c,c++ \
         --with-sysroot="${PREFIX}/${TARGET}" \
+        --enable-languages=c,c++ \
+        --disable-multilib \
+        --disable-nls \
+        --disable-libsanitizer \
     || handle_configure_error $?
 
     $MAKE
     make install
 
-    touch __package_installed
+    touch "../${PKG_BUILD_SUBDIR}/__package_installed"
 fi
 )
 
