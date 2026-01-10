@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# build-gcc.sh
+# build-arm-linux-musleabi.sh
 #
 # Copyright (C) 2025 Richard Elwell
 #
