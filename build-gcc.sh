@@ -624,11 +624,11 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --target=${TARGET} \
         --prefix="${PREFIX}" \
         --without-headers \
+        --enable-shared \
         --enable-languages=c \
         --disable-threads \
-        --disable-libgcov \
-        --disable-shared \
         --enable-threads=single \
+        --disable-libgcov \
         --disable-multilib \
         --disable-nls \
         --disable-libssp \
