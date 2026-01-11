@@ -596,7 +596,7 @@ fi
 )
 
 ################################################################################
-# gcc-12.5.0 (bootstrap)
+# gcc-12.5.0 (bootstrap gcc)
 (
 PKG_NAME=gcc
 PKG_VERSION=12.5.0
@@ -608,7 +608,7 @@ PKG_HASH="71cd373d0f04615e66c5b5b14d49c1a4c1a08efa7b30625cd240b11bab4062b3"
 
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
-if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed__gcc" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
@@ -624,11 +624,9 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --target=${TARGET} \
         --prefix="${PREFIX}" \
         --without-headers \
-        --enable-shared \
         --enable-languages=c \
         --disable-threads \
-        --enable-threads=single \
-        --disable-libgcov \
+        --disable-shared \
         --disable-multilib \
         --disable-nls \
         --disable-libssp \
@@ -636,17 +634,30 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --disable-libgomp \
         --disable-libsanitizer \
         --disable-libstdcxx-pch \
+        --disable-libgcov \
     || handle_configure_error $?
 
     $MAKE all-gcc
     make install-gcc
     touch "../${PKG_BUILD_SUBDIR}/__package_installed__gcc"
+fi
+)
 
+################################################################################
+# gcc-12.5.0 (bootstrap libgcc)
+(
+PKG_NAME=gcc
+PKG_VERSION=12.5.0
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_BUILD_SUBDIR="${PKG_SOURCE_SUBDIR}-build-bootstrap"
+
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed__libgcc" ]; then
+    cd "${PKG_BUILD_SUBDIR}"
     $MAKE all-target-libgcc
     make install-target-libgcc
     touch "../${PKG_BUILD_SUBDIR}/__package_installed__libgcc"
-
-    touch "../${PKG_BUILD_SUBDIR}/__package_installed"
 fi
 )
 
@@ -672,7 +683,8 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
     mkdir "${PKG_BUILD_SUBDIR}"
     cd "${PKG_BUILD_SUBDIR}"
 
-    CC=$TARGET-gcc \
+    export CROSS_COMPILE=${TARGET}-
+
     ../${PKG_SOURCE_SUBDIR}/configure \
         --prefix="${PREFIX}/${TARGET}" \
         --target=${TARGET} \
@@ -714,6 +726,7 @@ if [ ! -f "${PKG_BUILD_SUBDIR}/__package_installed" ]; then
         --prefix="${PREFIX}" \
         --with-sysroot="${PREFIX}/${TARGET}" \
         --enable-languages=c,c++ \
+        --enable-shared \
         --disable-multilib \
         --disable-nls \
         --disable-libsanitizer \
