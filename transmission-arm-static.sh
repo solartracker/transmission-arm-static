@@ -21,7 +21,7 @@
 PATH_CMD="$(readlink -f -- "$0")"
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "$0")")"
 PARENT_DIR="$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")"
-CACHED_DIR="${PARENT_DIR}/tomatoware-sources"
+CACHED_DIR="${PARENT_DIR}/solartracker-sources"
 set -e
 set -x
 
