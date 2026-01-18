@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# transmission-arm-musleabi.sh
+# transmission-arm-musl.sh
 #
 # Copyright (C) 2025 Richard Elwell
 #

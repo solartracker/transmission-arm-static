@@ -1,6 +1,6 @@
 #!/bin/sh
 ################################################################################
-# transmission-arm-static.sh
+# transmission-arm-tomatoware.sh
 #
 # Copyright (C) 2025 Richard Elwell
 #
