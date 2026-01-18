@@ -909,7 +909,7 @@ fi
 PKG_NAME=curl
 PKG_VERSION=8.17.0
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
-PKG_SOURCE_URL="https://github.com/curl/curl/releases/download/curl-${PKG_VERSION//./_}/${PKG_SOURCE}"
+PKG_SOURCE_URL="https://github.com/curl/curl/releases/download/curl-$(echo "${PKG_VERSION}" | tr '.' '_')/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="955f6e729ad6b3566260e8fef68620e76ba3c31acf0a18524416a185acf77992"
 
