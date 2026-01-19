@@ -1363,7 +1363,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    #apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
     rm -rf build
