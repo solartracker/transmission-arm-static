@@ -713,8 +713,6 @@ case "${HOST_CPU}" in
         ;;
 esac
 
-#PREFIX="${CROSSBUILD_DIR}"
-#mkdir -p "${PREFIX}"
 SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
 mkdir -p "${SRC_ROOT}"
 
@@ -1376,8 +1374,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
         -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-        -DHAVE_SENDFILE64=OFF \
-        -DENABLE_WERROR=OFF \
+        -DHAVE_SENDFILE64:BOOL=NO \
+        -DHAVE_HTONLL:BOOL=NO \
+        -DHAVE_NTOHLL:BOOL=NO \
+        -DENABLE_WERROR:BOOL=OFF \
         -DENABLE_CLI:BOOL=YES \
         -DENABLE_GTK:BOOL=NO \
         -DENABLE_QT:BOOL=NO \
