@@ -1368,6 +1368,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
+
+    mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker"
+    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/100-static-cli.patch"
+    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/101-static-daemon.patch"
+    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-utils.patch"
+
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" "./daemon/"
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" "./cli/"
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
