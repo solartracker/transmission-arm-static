@@ -818,7 +818,6 @@ PKG_HASH="0684ed2c8406437e7519a1bd20ea83780db871b3a3a5d752311ba3e889dbfc70"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}"
 cd "${SRC_ROOT}/${PKG_NAME}"
 
-rm -rf "${PKG_SOURCE_SUBDIR}"
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
@@ -1130,10 +1129,11 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    $MAKE all_src CC=${CC} CFLAGS="${CFLAGS}"
-
     mkdir -p ${PREFIX}/include/b64
     cp -p include/b64/*.h ${PREFIX}/include/b64/
+
+    $MAKE all_src CC=${CC} CFLAGS="${CFLAGS}"
+
     mkdir -p ${PREFIX}/lib/
     cp -p src/*.a ${PREFIX}/lib/
 
