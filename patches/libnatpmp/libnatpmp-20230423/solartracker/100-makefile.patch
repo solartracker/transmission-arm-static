@@ -1,0 +1,20 @@
+--- a/Makefile	2013-12-09 15:52:28.000000000 -0500
++++ b/Makefile	2026-01-19 11:59:43.084204596 -0500
+@@ -56,7 +56,7 @@
+ endif
+ endif
+ 
+-HEADERS = natpmp.h
++HEADERS = natpmp.h natpmp_declspec.h
+ 
+ EXECUTABLES = testgetgateway natpmpc-shared natpmpc-static
+ 
+@@ -144,7 +144,7 @@
+ 	 -DcreateChecksum=true
+ 
+ cleaninstall:
+-	$(RM) $(addprefix $(INSTALLDIRINC), $(HEADERS))
++	$(RM) $(addprefix $(INSTALLDIRINC)/, $(HEADERS))
+ 	$(RM) $(INSTALLDIRLIB)/$(SONAME)
+ 	$(RM) $(INSTALLDIRLIB)/$(SHAREDLIB)
+ 	$(RM) $(INSTALLDIRLIB)/$(STATICLIB)

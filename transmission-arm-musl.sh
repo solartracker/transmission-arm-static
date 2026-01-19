@@ -725,6 +725,14 @@ export PKG_CONFIG="pkg-config"
 export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
+# CMAKE options
+CMAKE_BUILD_TYPE="RelWithDebInfo"
+CMAKE_VERBOSE_MAKEFILE="YES"
+CMAKE_C_FLAGS="${CFLAGS}"
+CMAKE_CXX_FLAGS="${CXXFLAGS}"
+CMAKE_LD_FLAGS="${LDFLAGS}"
+CMAKE_CPP_FLAGS="${CPPFLAGS}"
+
 {
     printf '%s\n' "# toolchain.cmake"
     printf '%s\n' "set(CMAKE_SYSTEM_NAME Linux)"
@@ -752,8 +760,7 @@ unset PKG_CONFIG_PATH
     printf '%s\n' ""
     printf '%s\n' "set(CMAKE_C_STANDARD 11)"
     printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
-    printf '%s\n' "set(CMAKE_C_FLAGS \"-static ${CFLAGS}\")"
-    printf '%s\n' "set(CMAKE_CXX_FLAGS \"-static -static-libgcc -static-libstdc++ ${CXXFLAGS}\")"
+    printf '%s\n' ""
 } >"${PREFIX}/arm-musl.toolchain.cmake"
 
 
@@ -782,13 +789,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd build
 
     cmake .. \
-      -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
-      -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-      -DCMAKE_PREFIX_PATH="${PREFIX}" \
-      -DENABLE_STATIC=ON \
-      -DENABLE_SHARED=OFF \
-      -DCMAKE_VERBOSE_MAKEFILE=ON \
-      -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
+        -DCMAKE_PREFIX_PATH="${PREFIX}" \
+        -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+        -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
 
     $MAKE
     make install
@@ -812,37 +818,37 @@ PKG_HASH="0684ed2c8406437e7519a1bd20ea83780db871b3a3a5d752311ba3e889dbfc70"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}"
 cd "${SRC_ROOT}/${PKG_NAME}"
 
+rm -rf "${PKG_SOURCE_SUBDIR}"
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-#    make CC=${CC} CFLAGS="${CFLAGS} -DENABLE_STRNATPMPERR"
-#    make install INSTALLPREFIX=${PREFIX}
+    $MAKE CC=${CC} CFLAGS="${CFLAGS} -DENABLE_STRNATPMPERR"
+    make install INSTALLPREFIX=${PREFIX}
 
-    rm -rf build
-    mkdir -p build
-    cd build
-
-    cmake .. \
-      -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
-      -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-      -DCMAKE_PREFIX_PATH="${PREFIX}" \
-      -DCMAKE_VERBOSE_MAKEFILE=ON
-#      -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
-
-    $MAKE
-    make install
-
-    cd ..
+#    rm -rf build
+#    mkdir -p build
+#    cd build
+#
+#    cmake .. \
+#        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+#        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+#        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
+#        -DCMAKE_PREFIX_PATH="${PREFIX}" \
+#        -DCMAKE_INSTALL_PREFIX="${PREFIX}"
+#
+#    $MAKE
+#    make install
+#
+#    cd ..
 
     touch __package_installed
 fi
 )
-exit 1
 
 ################################################################################
 # miniupnpc-2.3.3
@@ -1081,8 +1087,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     cmake .. \
         -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
-        -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
+        -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
         -DLIBUTP_SHARED=NO \
         -DLIBUTP_ENABLE_INSTALL=YES \
         -DLIBUTP_ENABLE_WERROR=OFF \
@@ -1363,7 +1371,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     cmake .. \
         -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
+        -DCMAKE_PREFIX_PATH="${PREFIX}" \
+        -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
         -DHAVE_SENDFILE64=OFF \
         -DENABLE_WERROR=OFF \
         -DENABLE_CLI:BOOL=YES \
