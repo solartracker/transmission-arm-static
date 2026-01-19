@@ -1377,6 +1377,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DHAVE_SENDFILE64:BOOL=NO \
         -DHAVE_HTONLL:BOOL=NO \
         -DHAVE_NTOHLL:BOOL=NO \
+        -DHAVE_QUOTA:BOOL=NO \
         -DENABLE_WERROR:BOOL=OFF \
         -DENABLE_CLI:BOOL=YES \
         -DENABLE_GTK:BOOL=NO \
