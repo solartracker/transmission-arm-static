@@ -33,20 +33,20 @@ target_include_directories(${TR_NAME}-daemon SYSTEM
 target_link_libraries(${TR_NAME}-daemon
     PRIVATE
         ${LIBTRANSMISSION_LIB}
-        ${PREFIX}/lib/libdeflate.a
-        ${PREFIX}/lib/libssl.a
-        ${PREFIX}/lib/libcrypto.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libdeflate.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libssl.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libcrypto.a
         -ldl
-        ${PREFIX}/lib/libcurl.a
-        ${PREFIX}/lib/libpsl.a
-        ${PREFIX}/lib/libnatpmp.a
-        ${PREFIX}/lib/libminiupnpc.a
-        ${PREFIX}/third-party/dht/libdht.a
-        ${PREFIX}/lib/libutp.a
-        ${PREFIX}/lib/libb64.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libpsl.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libnatpmp.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libminiupnpc.a
+        ${CMAKE_INSTALL_PREFIX}/third-party/dht/libdht.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libutp.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libb64.a
         -lm
-        ${PREFIX}/third-party/jsonsl/libjsonsl.a
-        ${PREFIX}/third-party/wildmat/libwildmat.a
+        ${CMAKE_INSTALL_PREFIX}/third-party/jsonsl/libjsonsl.a
+        ${CMAKE_INSTALL_PREFIX}/third-party/wildmat/libwildmat.a
         ${TR_NAME}
         libevent::event
         fmt::fmt-header-only
