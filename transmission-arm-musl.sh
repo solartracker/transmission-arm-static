@@ -57,7 +57,7 @@ sign_file()
 
     local target_path="$1"
     local option="$2"
-    local sign_path="$(readlink -f "${target_path}").sign"
+    local sign_path="$(readlink -f "${target_path}").sha256"
     local target_file="$(basename -- "${target_path}")"
     local target_file_hash=""
     local temp_path=""
@@ -108,7 +108,7 @@ verify_hash() {
     local expected="$2"
     local option="$3"
     local actual=""
-    local sign_path="$(readlink -f "${file_path}").sign"
+    local sign_path="$(readlink -f "${file_path}").sha256"
     local line=""
 
     if [ ! -f "${file_path}" ]; then
@@ -683,6 +683,11 @@ fi
 
 PKG_ROOT=transmission
 
+#BUILD_TRANSMISSION_VERSION="3.00"
+#BUILD_TRANSMISSION_VERSION="3.00+git"
+BUILD_TRANSMISSION_VERSION="4.0.6"
+#BUILD_TRANSMISSION_VERSION="4.0.6+git"
+
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
 export SYSROOT="${PREFIX}/${TARGET}"
@@ -696,7 +701,8 @@ export STRIP=${CROSS_PREFIX}strip
 
 export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
 export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
-export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC -std=gnu99"
+export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
+export CXXFLAGS="${CFLAGS}"
 
 case "${HOST_CPU}" in
     armv7l)
@@ -718,6 +724,152 @@ MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 export PKG_CONFIG="pkg-config"
 export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
+
+{
+    printf '%s\n' "# toolchain.cmake"
+    printf '%s\n' "set(CMAKE_SYSTEM_NAME Linux)"
+    printf '%s\n' "set(CMAKE_SYSTEM_PROCESSOR arm)"
+    printf '%s\n' ""
+    printf '%s\n' "# Cross-compiler"
+    printf '%s\n' "set(CMAKE_C_COMPILER arm-linux-musleabi-gcc)"
+    printf '%s\n' "set(CMAKE_CXX_COMPILER arm-linux-musleabi-g++)"
+    printf '%s\n' "set(CMAKE_AR arm-linux-musleabi-ar)"
+    printf '%s\n' "set(CMAKE_RANLIB arm-linux-musleabi-ranlib)"
+    printf '%s\n' "set(CMAKE_STRIP arm-linux-musleabi-strip)"
+    printf '%s\n' ""
+    printf '%s\n' "# Optional: sysroot"
+    printf '%s\n' "set(CMAKE_SYSROOT \"${SYSROOT}\")"
+    printf '%s\n' ""
+    printf '%s\n' "# Avoid picking host libraries"
+    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH \"${PREFIX}\")"
+    printf '%s\n' ""
+    printf '%s\n' "# Tell CMake to search only in sysroot"
+    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)"
+    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"
+    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)"
+    printf '%s\n' ""
+    printf '%s\n' "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY) # critical for skipping warning probes"
+    printf '%s\n' ""
+    printf '%s\n' "set(CMAKE_C_STANDARD 11)"
+    printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
+    printf '%s\n' "set(CMAKE_C_FLAGS \"-static ${CFLAGS}\")"
+    printf '%s\n' "set(CMAKE_CXX_FLAGS \"-static -static-libgcc -static-libstdc++ ${CXXFLAGS}\")"
+} >"${PREFIX}/arm-musl.toolchain.cmake"
+
+
+################################################################################
+# libdeflate-1.25
+(
+PKG_NAME=libdeflate
+PKG_VERSION=1.25
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://github.com/ebiggers/libdeflate/releases/download/v${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="fed5cd22f00f30cc4c2e5329f94e2b8a901df9fa45ee255cb70e2b0b42344477"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    rm -rf build
+    mkdir -p build
+    cd build
+
+    cmake .. \
+      -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+      -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+      -DCMAKE_PREFIX_PATH="${PREFIX}" \
+      -DENABLE_STATIC=ON \
+      -DENABLE_SHARED=OFF \
+      -DCMAKE_VERBOSE_MAKEFILE=ON \
+      -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+
+    $MAKE
+    make install
+
+    cd ..
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# libnatpmp-20230423
+(
+PKG_NAME=libnatpmp
+PKG_VERSION=20230423
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://miniupnp.tuxfamily.org/files/download.php?file=${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="0684ed2c8406437e7519a1bd20ea83780db871b3a3a5d752311ba3e889dbfc70"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+#    make CC=${CC} CFLAGS="${CFLAGS} -DENABLE_STRNATPMPERR"
+#    make install INSTALLPREFIX=${PREFIX}
+
+    rm -rf build
+    mkdir -p build
+    cd build
+
+    cmake .. \
+      -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+      -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+      -DCMAKE_PREFIX_PATH="${PREFIX}" \
+      -DCMAKE_VERBOSE_MAKEFILE=ON
+#      -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+
+    $MAKE
+    make install
+
+    cd ..
+
+    touch __package_installed
+fi
+)
+exit 1
+
+################################################################################
+# miniupnpc-2.3.3
+(
+PKG_NAME=miniupnpc
+PKG_VERSION=2.3.3
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://miniupnp.tuxfamily.org/files/download.php?file=${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="d52a0afa614ad6c088cc9ddff1ae7d29c8c595ac5fdd321170a05f41e634bd1a"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    $MAKE CC=${CC} CFLAGS="${CFLAGS}"
+    make install INSTALLPREFIX=${PREFIX}
+
+    touch __package_installed
+fi
+)
 
 ################################################################################
 # zlib-1.3.1
@@ -840,6 +992,7 @@ PKG_HASH="eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "." "${PKG_SOURCE_VERSION}" "${PKG_SOURCE_SUBDIR}"
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
@@ -862,6 +1015,124 @@ fi
 )
 
 ################################################################################
+# libpsl-0.21.5
+(
+PKG_NAME=libpsl
+PKG_VERSION=0.21.5
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://github.com/rockdaboot/libpsl/releases/download/v${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="1dcc9ceae8b128f3c0b3f654decd0e1e891afc6ff81098f227ef260449dae208"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    ./configure \
+        --enable-static \
+        --disable-shared \
+        --disable-nls \
+        --disable-rpath \
+        --disable-dependency-tracking \
+        --without-libiconv-prefix \
+        --without-libintl-prefix \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# libutp-20230214+git
+(
+PKG_NAME=libutp
+PKG_SOURCE_DATE="20230214"
+PKG_VERSION="${PKG_SOURCE_DATE}+git"
+PKG_SOURCE_VERSION="c95738b1a6644b919e5b64d3ea9736cfc5894e0b"
+PKG_SOURCE_URL="https://github.com/transmission/libutp/archive/${PKG_SOURCE_VERSION}.tar.gz"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.gz"
+PKG_HASH="d856fde68828d52eb39df40e15ad5dc4efaa9a51d4121bcbfbe47fed2163d20a"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    rm -rf build
+    mkdir -p build
+    cd build
+
+    cmake .. \
+        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+        -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+        -DCMAKE_PREFIX_PATH="${PREFIX}" \
+        -DLIBUTP_SHARED=NO \
+        -DLIBUTP_ENABLE_INSTALL=YES \
+        -DLIBUTP_ENABLE_WERROR=OFF \
+        -DLIBUTP_BUILD_PROGRAMS=NO \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+    $MAKE
+    make install
+
+    cd ..
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# libb64-20200908+git
+(
+PKG_NAME=libb64
+PKG_SOURCE_DATE="20200908"
+PKG_VERSION="${PKG_SOURCE_DATE}+git"
+PKG_SOURCE_VERSION="b5edeafc89853c48fa41a4c16393a1fdc8638ab6"
+PKG_SOURCE_URL="https://github.com/libb64/libb64/archive/${PKG_SOURCE_VERSION}.tar.gz"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}-${PKG_SOURCE_VERSION}.tar.gz"
+PKG_HASH="dcdd5923d61e7f9d0deab773490a3613afd94abc2ca15ccebdf59a848650182c"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    $MAKE all_src CC=${CC} CFLAGS="${CFLAGS}"
+
+    mkdir -p ${PREFIX}/include/b64
+    cp -p include/b64/*.h ${PREFIX}/include/b64/
+    mkdir -p ${PREFIX}/lib/
+    cp -p src/*.a ${PREFIX}/lib/
+
+    touch __package_installed
+fi
+)
+
+################################################################################
 # openssl-3.6.0
 (
 PKG_NAME=openssl
@@ -874,6 +1145,7 @@ PKG_HASH="b6a5f44b7eb69e3fa35dbf15524405b44837a481d43d81daddde3ff21fcbb8e9"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
@@ -916,6 +1188,7 @@ PKG_HASH="955f6e729ad6b3566260e8fef68620e76ba3c31acf0a18524416a185acf77992"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
@@ -973,6 +1246,7 @@ PKG_HASH="92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
@@ -1001,6 +1275,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+
+if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
 ################################################################################
 # transmission-3.00
 (
@@ -1014,13 +1290,13 @@ PKG_HASH="9144652fe742f7f7dd6657716e378da60b751aaeda8bef8344b3eefc4db255f2"
 mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    #export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt ${TOMATOWARE_SYSROOT}/lib/libatomic.a"
     export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt"
 
     LDFLAGS="-static ${LDFLAGS}" \
@@ -1055,4 +1331,63 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]
+
+
+
+if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]; then
+################################################################################
+# transmission-4.0.6
+(
+PKG_NAME=transmission
+PKG_VERSION=4.0.6
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.xz"
+PKG_SOURCE_URL="https://github.com/transmission/transmission/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="2a38fe6d8a23991680b691c277a335f8875bdeca2b97c6b26b598bc9c7b0c45f"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    #apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    rm -rf build
+    mkdir -p build
+    cd build
+
+    cmake .. \
+        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DHAVE_SENDFILE64=OFF \
+        -DENABLE_WERROR=OFF \
+        -DENABLE_CLI:BOOL=YES \
+        -DENABLE_GTK:BOOL=NO \
+        -DENABLE_QT:BOOL=NO \
+        -DENABLE_MAC:BOOL=NO \
+        -DENABLE_TESTS:BOOL=NO \
+        -DENABLE_NLS:BOOL=NO \
+        -DENABLE_UTP:BOOL=YES \
+        -DRUN_CLANG_TIDY:BOOL=NO \
+        -DUSE_SYSTEM_DHT:BOOL=OFF \
+        -DWITH_INOTIFY:BOOL=YES \
+        -DWITH_KQUEUE:BOOL=NO \
+        -DWITH_SYSTEMD:BOOL=NO
+
+    $MAKE
+    make install
+
+    cd ..
+
+    touch __package_installed
+fi
+)
+fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]
+
+
 
