@@ -1026,7 +1026,7 @@ fi
 PKG_NAME=libpsl
 PKG_VERSION=0.21.5
 PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://github.com/rockdaboot/libpsl/releases/download/v${PKG_VERSION}/${PKG_SOURCE}"
+PKG_SOURCE_URL="https://github.com/rockdaboot/libpsl/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="1dcc9ceae8b128f3c0b3f654decd0e1e891afc6ff81098f227ef260449dae208"
 
