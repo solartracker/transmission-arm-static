@@ -702,7 +702,7 @@ export STRIP=${CROSS_PREFIX}strip
 export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
 export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
-export CXXFLAGS="-std=c++20 ${CFLAGS}"
+export CXXFLAGS="${CFLAGS}"
 
 case "${HOST_CPU}" in
     armv7l)
@@ -757,7 +757,7 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY) # critical for skipping warning probes"
     printf '%s\n' ""
     printf '%s\n' "set(CMAKE_C_STANDARD 11)"
-    printf '%s\n' "set(CMAKE_CXX_STANDARD 20)"
+    printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
     printf '%s\n' ""
 } >"${PREFIX}/arm-musl.toolchain.cmake"
 
