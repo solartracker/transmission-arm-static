@@ -702,7 +702,7 @@ export STRIP=${CROSS_PREFIX}strip
 export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
 export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
-export CXXFLAGS="${CFLAGS}"
+export CXXFLAGS="-std=c++20 ${CFLAGS}"
 
 case "${HOST_CPU}" in
     armv7l)
