@@ -13,6 +13,8 @@ foreach(P create edit remote show)
             ${CMAKE_INSTALL_PREFIX}/lib/libcrypto.a
             -ldl
             ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
+            ${CMAKE_INSTALL_PREFIX}/lib/libz.a
+            ${CMAKE_INSTALL_PREFIX}/lib/libzstd.a
             ${CMAKE_INSTALL_PREFIX}/lib/libpsl.a
             ${CMAKE_INSTALL_PREFIX}/lib/libnatpmp.a
             ${CMAKE_INSTALL_PREFIX}/lib/libminiupnpc.a
