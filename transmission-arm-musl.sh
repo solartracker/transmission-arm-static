@@ -757,7 +757,7 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY) # critical for skipping warning probes"
     printf '%s\n' ""
     printf '%s\n' "set(CMAKE_C_STANDARD 11)"
-    printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
+    printf '%s\n' "set(CMAKE_CXX_STANDARD 20)"
     printf '%s\n' ""
 } >"${PREFIX}/arm-musl.toolchain.cmake"
 
