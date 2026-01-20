@@ -1390,6 +1390,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
         -DHAVE_LIBQUOTA:BOOL=NO \
         -DHAVE_SENDFILE64:BOOL=NO \
+        -DHAVE_FALLOCATE64:BOOL=NO \
         -DHAVE_HTONLL:BOOL=NO \
         -DHAVE_NTOHLL:BOOL=NO \
         -DENABLE_CLI:BOOL=YES \
@@ -1403,10 +1404,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO
-
-#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" "../daemon/"
-#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" "../cli/"
-#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "../utils/"
 
     $MAKE
     make install
