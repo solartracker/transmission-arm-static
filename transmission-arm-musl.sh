@@ -1164,7 +1164,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export LDFLAGS="-static ${LDFLAGS}"
     export LIBS="-lzstd -lz"
 
-    ./Configure linux-armv4 \
+    ./Configure linux-armv4 no-asm \
         enable-zlib enable-zstd no-zlib-dynamic \
         no-shared no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
         no-err no-async \
@@ -1173,7 +1173,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         enable-rc5 \
         --prefix="${PREFIX}" \
         --with-rand-seed=devrandom \
-        -DOPENSSL_PREFER_CHACHA_OVER_GCM
+        -DOPENSSL_PREFER_CHACHA_OVER_GCM \
+        -DOPENSSL_USE_POSIX_ERRNO
 
     $MAKE
     make install DESTDIR="" PREFIX="${PREFIX}"
