@@ -1400,7 +1400,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DENABLE_NLS:BOOL=NO \
         -DENABLE_UTP:BOOL=YES \
         -DRUN_CLANG_TIDY:BOOL=NO \
-        -DUSE_SYSTEM_DHT:BOOL=NO \
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO

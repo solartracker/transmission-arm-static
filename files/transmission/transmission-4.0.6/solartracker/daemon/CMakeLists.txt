@@ -41,12 +41,12 @@ target_link_libraries(${TR_NAME}-daemon
         ${CMAKE_INSTALL_PREFIX}/lib/libpsl.a
         ${CMAKE_INSTALL_PREFIX}/lib/libnatpmp.a
         ${CMAKE_INSTALL_PREFIX}/lib/libminiupnpc.a
-        ${CMAKE_INSTALL_PREFIX}/third-party/dht/libdht.a
+        ${CMAKE_BINARY_DIR}/third-party/dht/libdht.a
         ${CMAKE_INSTALL_PREFIX}/lib/libutp.a
         ${CMAKE_INSTALL_PREFIX}/lib/libb64.a
         -lm
-        ${CMAKE_INSTALL_PREFIX}/third-party/jsonsl/libjsonsl.a
-        ${CMAKE_INSTALL_PREFIX}/third-party/wildmat/libwildmat.a
+        ${CMAKE_BINARY_DIR}/third-party/jsonsl/libjsonsl.a
+        ${CMAKE_BINARY_DIR}/third-party/wildmat/libwildmat.a
         ${TR_NAME}
         libevent::event
         fmt::fmt-header-only
