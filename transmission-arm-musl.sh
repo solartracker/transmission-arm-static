@@ -160,6 +160,18 @@ verify_hash() {
     return 0
 }
 
+# the signature file is just a checksum hash
+signature_file_exists() {
+    [ -n "$1" ] || return 1
+    local file_path="$1"
+    local sign_path="$(readlink -f "${file_path}").sha256"
+    if [ -f "${sign_path}" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 retry() {
     local max=$1
     shift
@@ -629,9 +641,19 @@ PKG_SOURCE_URL="https://github.com/solartracker/${PKG_NAME}/releases/download/${
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_SOURCE_PATH="${CACHED_DIR}/${PKG_SOURCE}"
 
-if [ $(expr length "$PKG_VERSION") -eq 14 ]; then
-    # use an archived toolchain that you built yourself. the version number is a 14 digit timestamp.
-    # Example: cross-arm-linux-musleabi-armv7l-20260115045834.tar.xz
+if signature_file_exists "${PKG_SOURCE_PATH}"; then
+    # use an archived toolchain that you built yourself, along with a signature
+    # file that was created automatically.  the version number is a 14 digit
+    # timestamp and a symbolic link was automatically created for the release
+    # asset that would normally have been downloaded. all this is done for you
+    # by the toolchain build script: build-arm-linux-musleabi.sh
+    #
+    # Example of what your sources directory might look like:
+    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
+    # cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
+    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz
+    # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz.sha256 -> cross-arm-linux-musleabi-armv7l-20260120150840.tar.xz.sha256
+    #
     PKG_HASH=""
 else
     # alternatively, the toolchain can be downloaded from Github. note that the version
