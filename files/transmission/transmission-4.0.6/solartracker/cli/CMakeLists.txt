@@ -7,13 +7,13 @@ target_sources(${TR_NAME}-cli
 target_link_libraries(${TR_NAME}-cli
     PRIVATE
         ${LIBTRANSMISSION_LIB}
-        ${CMAKE_INSTALL_PREFIX}/lib/libdeflate.a
-        ${CMAKE_INSTALL_PREFIX}/lib/libssl.a
-        ${CMAKE_INSTALL_PREFIX}/lib/libcrypto.a
-        -ldl
         ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
         ${CMAKE_INSTALL_PREFIX}/lib/libz.a
         ${CMAKE_INSTALL_PREFIX}/lib/libzstd.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libssl.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libcrypto.a
+        ${CMAKE_INSTALL_PREFIX}/lib/libdeflate.a
+        -ldl
         ${CMAKE_INSTALL_PREFIX}/lib/libpsl.a
         ${CMAKE_INSTALL_PREFIX}/lib/libnatpmp.a
         ${CMAKE_INSTALL_PREFIX}/lib/libminiupnpc.a
