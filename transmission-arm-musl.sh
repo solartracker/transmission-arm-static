@@ -701,8 +701,8 @@ export STRIP=${CROSS_PREFIX}strip
 
 export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
 export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=1"
-export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
-export CXXFLAGS="${CFLAGS}"
+export CFLAGS="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -Wno-int-conversion -fPIC"
+export CXXFLAGS="-std=c++17 ${CFLAGS}"
 
 case "${HOST_CPU}" in
     armv7l)
@@ -1173,8 +1173,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         enable-rc5 \
         --prefix="${PREFIX}" \
         --with-rand-seed=devrandom \
-        -DOPENSSL_PREFER_CHACHA_OVER_GCM \
-        -DOPENSSL_USE_POSIX_ERRNO
+        -DOPENSSL_PREFER_CHACHA_OVER_GCM
 
     $MAKE
     make install DESTDIR="" PREFIX="${PREFIX}"
