@@ -638,12 +638,12 @@ else
     # number is the Github tag, instead of a 14 digit timestamp.
     case "${HOST_CPU}" in
         armv7l)
-            # cross-arm-linux-musleabi-armv7l-0.1.0.tar.xz
-            PKG_HASH="5c8f54f146082775cebd8d77624c4c4f3bb1b38c9a4dea01916453df029e9c48"
+            # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz
+            PKG_HASH="db200a801420d21b5328c9005225bb0fa822b612c6b67b3da58c397458238634"
             ;;
         x86_64)
             # cross-arm-linux-musleabi-x86_64-0.2.0.tar.xz
-            PKG_HASH="81457154dc10c83e4ed6d81f40c5573d78a279e3ce655351c043bcb7f68049b3"
+            PKG_HASH="9a303a9978ff8d590394bccf2a03890ccb129916347dcdd66dc7780ea7826d9b"
             ;;
         *)
             echo "Unsupported CPU architecture: "${HOST_CPU} >&2
