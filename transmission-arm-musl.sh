@@ -1392,14 +1392,22 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
 
-    mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker"
-    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/100-static-cli.patch" || true
-    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/101-static-daemon.patch" || true
-    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-utils.patch" || true
+    #mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker"
+    #diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/100-static-cli.patch" || true
+    #diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/101-static-daemon.patch" || true
+    #diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-utils.patch" || true
 
+    # specify explicit static library names
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" "./daemon/"
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" "./cli/"
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
+
+    # temporarily hide shared libraries from cmake
+    mkdir "${PREFIX}/lib/hide_shared_libs"
+    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib/hide_shared_libs/"
+    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib/hide_shared_libs/"
+    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib/hide_shared_libs/"
+    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib/hide_shared_libs/"
 
     rm -rf build
     mkdir -p build
@@ -1435,6 +1443,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install
 
     cd ..
+
+    # restore the hidden shared libraries
+    mv "${PREFIX}/lib/hide_shared_libs/"* "${PREFIX}/lib/"
+    rmdir "${PREFIX}/lib/hide_shared_libs"
 
     # strip and verify there are no dependencies for static build
     finalize_build \
