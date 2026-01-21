@@ -1209,7 +1209,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
-        enable-zlib enable-zstd \
+        enable-zlib-dynamic enable-zstd-dynamic enable-shared \
         no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
         no-err no-async \
         no-aria no-sm2 no-sm3 no-sm4 \
