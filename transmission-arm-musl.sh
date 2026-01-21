@@ -1249,9 +1249,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export LIBS="-lssl -lcrypto -lzstd -lz"
+    #export LIBS="-lssl -lcrypto -lzstd -lz"
 
-    LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --enable-static \
         --enable-shared \
@@ -1278,7 +1277,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --with-openssl="${PREFIX}" \
     || handle_configure_error $?
 
-    $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
+    $MAKE V=1
     make install DESTDIR="" PREFIX="${PREFIX}"
 
     # strip and verify there are no dependencies for static build
