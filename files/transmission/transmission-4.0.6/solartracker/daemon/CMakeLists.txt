@@ -32,8 +32,7 @@ target_include_directories(${TR_NAME}-daemon SYSTEM
 
 target_link_libraries(${TR_NAME}-daemon
     PRIVATE
-        ${LIBTRANSMISSION_LIB}
-        ${TR_NAME}
+        ${CMAKE_BINARY_DIR}/libtransmission/libtransmission.a
         ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
         ${CMAKE_INSTALL_PREFIX}/lib/libz.a
         ${CMAKE_INSTALL_PREFIX}/lib/libzstd.a

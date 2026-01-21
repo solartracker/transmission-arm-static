@@ -7,8 +7,7 @@ foreach(P create edit remote show)
 
     target_link_libraries(${TR_NAME}-${P}
         PRIVATE
-            ${LIBTRANSMISSION_LIB}
-            ${TR_NAME}
+            ${CMAKE_BINARY_DIR}/libtransmission/libtransmission.a
             ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
             ${CMAKE_INSTALL_PREFIX}/lib/libz.a
             ${CMAKE_INSTALL_PREFIX}/lib/libzstd.a
