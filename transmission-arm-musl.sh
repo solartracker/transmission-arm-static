@@ -1249,7 +1249,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export LIBS="-lssl -lcrypto -lzstd -lz"
+    #export LIBS="-lssl -lcrypto -lzstd -lz"
 
     ./configure \
         --prefix="${PREFIX}" \
@@ -1273,10 +1273,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-docs \
         --without-libpsl \
         --with-openssl \
+        --without-zlib \
+        --without-zstd \
     || handle_configure_error $?
 
     $MAKE V=1
-    make install DESTDIR="" PREFIX="${PREFIX}"
+    make install# DESTDIR="" PREFIX="${PREFIX}"
 
     # strip and verify there are no dependencies for static build
     #finalize_build "${PREFIX}/bin/curl"
