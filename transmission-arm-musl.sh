@@ -1459,7 +1459,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
-        -DCMAKE_EXE_LINKER_FLAGS="${PREFIX}/lib/libcurl.a ${PREFIX}/lib/libz.a ${PREFIX}/lib/libzstd.a"
+        -DCMAKE_EXE_LINKER_FLAGS="${PREFIX}/lib/libz.a ${PREFIX}/lib/libzstd.a"
 
     $MAKE
     make install
