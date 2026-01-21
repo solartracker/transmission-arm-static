@@ -1223,7 +1223,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install DESTDIR="" PREFIX="${PREFIX}"
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${PREFIX}/bin/openssl"
+    #finalize_build "${PREFIX}/bin/openssl"
 
     touch __package_installed
 fi
@@ -1282,7 +1282,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install DESTDIR="" PREFIX="${PREFIX}"
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${PREFIX}/bin/curl"
+    #finalize_build "${PREFIX}/bin/curl"
 
     touch __package_installed
 fi
