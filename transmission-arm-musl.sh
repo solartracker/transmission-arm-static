@@ -886,7 +886,8 @@ fi
 )
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
+#if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # miniupnpc-2.2.8
 (
@@ -905,6 +906,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+
+if false; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
@@ -913,6 +916,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install INSTALLPREFIX=${PREFIX}
 
     touch __package_installed
+fi
+
 fi
 )
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
