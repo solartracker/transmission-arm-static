@@ -1220,7 +1220,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DOPENSSL_PREFER_CHACHA_OVER_GCM
 
     $MAKE
-    make install DESTDIR="" PREFIX="${PREFIX}"
+    make install
 
     # strip and verify there are no dependencies for static build
     #finalize_build "${PREFIX}/bin/openssl"
@@ -1273,7 +1273,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-docs \
         --without-libpsl \
         --with-openssl \
-        --without-zlib \
         --without-zstd \
     || handle_configure_error $?
 
@@ -1310,10 +1309,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export LIBS="-lssl -lcrypto"
 
     ./configure \
-        --enable-static \
-        --enable-shared \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
+        --enable-static \
+        --enable-shared \
         --disable-debug-mode \
         --disable-libevent-regress \
         --disable-samples \
@@ -1323,7 +1322,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     || handle_configure_error $?
 
     $MAKE
-    make install DESTDIR="" PREFIX="${PREFIX}"
+    make install
 
     touch __package_installed
 fi
