@@ -1316,7 +1316,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     ./configure \
         --enable-static \
-        --disable-shared \
+        --enable-shared \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
         --disable-debug-mode \
@@ -1328,7 +1328,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     || handle_configure_error $?
 
     $MAKE
-    find . -name '*.la' -delete
     make install DESTDIR="" PREFIX="${PREFIX}"
 
     touch __package_installed
