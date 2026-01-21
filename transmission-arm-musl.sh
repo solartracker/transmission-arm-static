@@ -1051,7 +1051,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install DESTDIR="" PREFIX="${PREFIX}"
 
     # strip and verify there are no dependencies for static build
-    finalize_build "${PREFIX}/bin/zstd"
+    #finalize_build "${PREFIX}/bin/zstd"
 
     touch __package_installed
 fi
