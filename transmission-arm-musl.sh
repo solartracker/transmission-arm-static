@@ -1440,7 +1440,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
 #    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
 
-    cp -a "${SRC_ROOT}/miniupnpc/miniupnpc-2.2.8/*" "./third-party/miniupnpc/"
+    cp -a "${SRC_ROOT}/miniupnpc/miniupnpc-2.2.8/"* "third-party/miniupnpc/"
 
     rm -rf build
     mkdir -p build
