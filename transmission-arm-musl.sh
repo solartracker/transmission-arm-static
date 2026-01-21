@@ -1436,7 +1436,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
 #    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
 
-    ln -sfn thirdparty/miniupnp/miniupnpc thirdparty/miniupnpc
+    ln -sfn third-party/miniupnp/miniupnpc third-party/miniupnpc
 
     rm -rf build
     mkdir -p build
