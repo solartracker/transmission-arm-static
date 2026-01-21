@@ -1260,7 +1260,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --enable-static \
-        --disable-shared \
+        --enable-shared \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
         --disable-debug \
