@@ -1249,7 +1249,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    #export LIBS="-lssl -lcrypto -lzstd -lz"
+    export LIBS="-lssl -lcrypto -lzstd -lz"
 
     ./configure \
         --prefix="${PREFIX}" \
