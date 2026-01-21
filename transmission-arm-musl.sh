@@ -1430,10 +1430,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     # temporarily hide shared libraries from cmake
     mkdir "${PREFIX}/lib_hidden"
-    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/"
-    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/"
-    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/"
-    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/"
+    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
 
     rm -rf build
     mkdir -p build
@@ -1471,7 +1471,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd ..
 
     # restore the hidden shared libraries
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/"
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
     rmdir "${PREFIX}/lib_hidden"
 
     # strip and verify there are no dependencies for static build
