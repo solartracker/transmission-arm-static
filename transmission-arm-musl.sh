@@ -534,6 +534,16 @@ get_latest_package() {
     return 0
 }
 
+contains() {
+    haystack=$1
+    needle=$2
+
+    case $haystack in
+        *"$needle"*) return 0 ;;
+        *)           return 1 ;;
+    esac
+}
+
 is_version_git() {
     case "$1" in
         *+git*)
@@ -705,10 +715,9 @@ fi
 
 PKG_ROOT=transmission
 
-BUILD_TRANSMISSION_VERSION="3.00"
-#BUILD_TRANSMISSION_VERSION="3.00+git"
-#BUILD_TRANSMISSION_VERSION="4.0.6"
-#BUILD_TRANSMISSION_VERSION="4.0.6+git"
+#BUILD_TRANSMISSION_VERSION="3.00"
+BUILD_TRANSMISSION_VERSION="4.0.6"
+#BUILD_TRANSMISSION_VERSION="4.0.6+thirdparty"
 
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
@@ -746,7 +755,7 @@ export PKG_CONFIG="pkg-config"
 export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
 # CMAKE options
 CMAKE_BUILD_TYPE="RelWithDebInfo"
 CMAKE_VERBOSE_MAKEFILE="YES"
@@ -784,10 +793,10 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
     printf '%s\n' ""
 } >"${PREFIX}/arm-musl.toolchain.cmake"
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # libdeflate-1.25
 (
@@ -828,9 +837,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # libnatpmp-20230423
 (
@@ -875,9 +884,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # miniupnpc-2.2.8
 (
@@ -906,7 +915,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
 ################################################################################
 # zlib-1.3.1
@@ -1026,7 +1035,8 @@ PKG_HASH="eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3"
 #PKG_HASH_VERIFY="tar_extract"
 #PKG_HASH="ae83002690aba91a210f3efc2dbf00aee5266f9b68f47b1130c95dd6a1a48e4b"
 
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
@@ -1051,7 +1061,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # libpsl-0.21.5
 (
@@ -1090,9 +1100,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # libutp-20230214+git
 (
@@ -1139,9 +1149,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # libb64-20200908+git
 (
@@ -1177,7 +1187,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
 ################################################################################
 # openssl-3.6.0
@@ -1189,7 +1199,8 @@ PKG_SOURCE_URL="https://github.com/openssl/openssl/releases/download/openssl-${P
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="b6a5f44b7eb69e3fa35dbf15524405b44837a481d43d81daddde3ff21fcbb8e9"
 
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
@@ -1233,7 +1244,8 @@ PKG_SOURCE_URL="https://github.com/curl/curl/releases/download/curl-$(echo "${PK
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="955f6e729ad6b3566260e8fef68620e76ba3c31acf0a18524416a185acf77992"
 
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
@@ -1291,7 +1303,8 @@ PKG_SOURCE_URL="https://github.com/libevent/libevent/releases/download/release-$
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="92e6de1be9ec176428fd2367677e61ceffc2ee1cb119035037a27d346b0403bb"
 
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
@@ -1323,7 +1336,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "3.00" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"; then
 ################################################################################
 # transmission-3.00
 (
@@ -1334,7 +1347,8 @@ PKG_SOURCE_URL="https://github.com/transmission/transmission/releases/download/$
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
 PKG_HASH="9144652fe742f7f7dd6657716e378da60b751aaeda8bef8344b3eefc4db255f2"
 
-mkdir -p "${SRC_ROOT}/${PKG_NAME}" && cd "${SRC_ROOT}/${PKG_NAME}"
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
 
 if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     rm -rf "${PKG_SOURCE_SUBDIR}"
@@ -1379,9 +1393,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "3.00" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"
 
-if [ "${BUILD_TRANSMISSION_VERSION}" = "4.0.6" ]; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
 ################################################################################
 # transmission-4.0.6
 (
@@ -1415,11 +1429,11 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
 
     # temporarily hide shared libraries from cmake
-    mkdir "${PREFIX}/lib/hide_shared_libs"
-    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib/hide_shared_libs/"
-    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib/hide_shared_libs/"
-    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib/hide_shared_libs/"
-    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib/hide_shared_libs/"
+    mkdir "${PREFIX}/lib_hidden"
+    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/"
+    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/"
+    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/"
+    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/"
 
     rm -rf build
     mkdir -p build
@@ -1457,8 +1471,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd ..
 
     # restore the hidden shared libraries
-    mv "${PREFIX}/lib/hide_shared_libs/"* "${PREFIX}/lib/"
-    rmdir "${PREFIX}/lib/hide_shared_libs"
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/"
+    rmdir "${PREFIX}/lib_hidden"
 
     # strip and verify there are no dependencies for static build
     finalize_build \
@@ -1472,5 +1486,5 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.0.6" ]
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
