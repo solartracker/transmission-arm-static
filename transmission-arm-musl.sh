@@ -1426,12 +1426,22 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DRUN_CLANG_TIDY:BOOL=NO \
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
-        -DWITH_SYSTEMD:BOOL=NO
+        -DWITH_SYSTEMD:BOOL=NO \
+        -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
 
     $MAKE
     make install
 
     cd ..
+
+    # strip and verify there are no dependencies for static build
+    finalize_build \
+        "${PREFIX}/bin/transmission-cli" \
+        "${PREFIX}/bin/transmission-create" \
+        "${PREFIX}/bin/transmission-daemon" \
+        "${PREFIX}/bin/transmission-edit" \
+        "${PREFIX}/bin/transmission-remote" \
+        "${PREFIX}/bin/transmission-show"
 
     touch __package_installed
 fi
