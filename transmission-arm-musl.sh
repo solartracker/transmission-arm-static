@@ -1278,7 +1278,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     || handle_configure_error $?
 
     $MAKE V=1
-    make install# DESTDIR="" PREFIX="${PREFIX}"
+    make install
 
     # strip and verify there are no dependencies for static build
     #finalize_build "${PREFIX}/bin/curl"
