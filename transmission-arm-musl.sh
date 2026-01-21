@@ -1046,10 +1046,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    $MAKE zstd \
-        LDFLAGS="-static ${LDFLAGS}" \
-        CFLAGS="${CFLAGS}" \
-        LIBS="${PREFIX}/lib/libz.a ${PREFIX}/lib/liblzma.a ${PREFIX}/lib/liblz4.a"
+    $MAKE zstd
 
     make install DESTDIR="" PREFIX="${PREFIX}"
 
