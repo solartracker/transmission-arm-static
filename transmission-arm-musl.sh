@@ -1457,7 +1457,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
-        -DCMAKE_EXE_LINKER_FLAGS="${PREFIX}/lib/libcurl.a ${PREFIX}/lib/libz.a ${PREFIX}/lib/libzstd.a ${PREFIX}/lib/libssl.a ${PREFIX}/lib/libcrypto.a"
+        -DCMAKE_EXE_LINKER_FLAGS="-L${PREFIX}/lib/libcurl.a -L${PREFIX}/lib/libz.a -L${PREFIX}/lib/libzstd.a -L${PREFIX}/lib/libssl.a -L${PREFIX}/lib/libcrypto.a"
 
     $MAKE
     make install
