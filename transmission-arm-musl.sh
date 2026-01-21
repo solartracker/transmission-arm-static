@@ -1053,8 +1053,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     make install DESTDIR="" PREFIX="${PREFIX}"
 
-    rm -f "${PREFIX}/lib/libzstd.so"*
-
     # strip and verify there are no dependencies for static build
     finalize_build "${PREFIX}/bin/zstd"
 
@@ -1216,7 +1214,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     ./Configure linux-armv4 no-asm \
         enable-zlib enable-zstd no-zlib-dynamic \
-        no-shared no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
+        no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
         no-err no-async \
         no-aria no-sm2 no-sm3 no-sm4 \
         no-dso no-ssl3 no-comp \
