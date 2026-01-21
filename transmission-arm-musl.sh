@@ -1427,7 +1427,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
-        -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++"
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
+        -DCMAKE_EXE_LINKER_FLAGS="-static -static-libstdc++ -static-libgcc"
 
     $MAKE
     make install
