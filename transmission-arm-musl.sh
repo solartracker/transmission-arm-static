@@ -705,9 +705,9 @@ fi
 
 PKG_ROOT=transmission
 
-#BUILD_TRANSMISSION_VERSION="3.00"
+BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="3.00+git"
-BUILD_TRANSMISSION_VERSION="4.0.6"
+#BUILD_TRANSMISSION_VERSION="4.0.6"
 #BUILD_TRANSMISSION_VERSION="4.0.6+git"
 
 export PREFIX="${CROSSBUILD_DIR}"
@@ -746,6 +746,7 @@ export PKG_CONFIG="pkg-config"
 export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 # CMAKE options
 CMAKE_BUILD_TYPE="RelWithDebInfo"
 CMAKE_VERBOSE_MAKEFILE="YES"
@@ -783,8 +784,10 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
     printf '%s\n' ""
 } >"${PREFIX}/arm-musl.toolchain.cmake"
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 ################################################################################
 # libdeflate-1.25
 (
@@ -825,7 +828,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 ################################################################################
 # libnatpmp-20230423
 (
@@ -870,7 +875,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 ################################################################################
 # miniupnpc-2.2.8
 (
@@ -899,6 +906,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
 ################################################################################
 # zlib-1.3.1
@@ -1043,6 +1051,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 ################################################################################
 # libpsl-0.21.5
 (
@@ -1081,7 +1090,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 ################################################################################
 # libutp-20230214+git
 (
@@ -1128,7 +1139,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]; then
 ################################################################################
 # libb64-20200908+git
 (
@@ -1164,6 +1177,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.06" ]
 
 ################################################################################
 # openssl-3.6.0
@@ -1309,8 +1323,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-
-if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]; then
+if [ "${BUILD_TRANSMISSION_VERSION}" = "3.00" ]; then
 ################################################################################
 # transmission-3.00
 (
@@ -1366,11 +1379,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "$BUILD_TRANSMISSION_VERSION" = "3.00" ]
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "3.00" ]
 
-
-
-if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]; then
+if [ "${BUILD_TRANSMISSION_VERSION}" = "4.0.6" ]; then
 ################################################################################
 # transmission-4.0.6
 (
@@ -1461,7 +1472,5 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if [ "$BUILD_TRANSMISSION_VERSION" = "4.0.6" ]
-
-
+fi # if [ "${BUILD_TRANSMISSION_VERSION}" = "4.0.6" ]
 
