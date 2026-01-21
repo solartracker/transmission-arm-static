@@ -1254,7 +1254,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --prefix="${PREFIX}" \
         --host="${HOST}" \
         --enable-static \
-        --enable-shared \
+        --disable-shared \
         --enable-libgcc \
         --disable-debug \
         --disable-curldebug \
@@ -1273,6 +1273,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-docs \
         --without-libpsl \
         --with-openssl \
+        --with-libz \
+        --with-zstd \
     || handle_configure_error $?
 
     $MAKE
