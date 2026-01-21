@@ -1429,16 +1429,18 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     #diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-utils.patch" || true
 
     # specify explicit static library names
-    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" "./daemon/"
-    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" "./cli/"
-    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
+#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" "./daemon/"
+#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" "./cli/"
+#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
 
     # temporarily hide shared libraries from cmake
-    mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
+#    mkdir "${PREFIX}/lib_hidden" || true
+#    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
+
+    cp -a "${SRC_ROOT}/transmission/miniupnpc/miniupnpc-2.2.8/*" "./third-party/miniupnpc/"
 
     rm -rf build
     mkdir -p build
@@ -1476,8 +1478,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd ..
 
     # restore the hidden shared libraries
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    rmdir "${PREFIX}/lib_hidden" || true
+#    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+#    rmdir "${PREFIX}/lib_hidden" || true
 
     # strip and verify there are no dependencies for static build
     finalize_build \
