@@ -1422,12 +1422,14 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
 
     # temporarily hide shared libraries from cmake
-#    mkdir "${PREFIX}/lib_hidden" || true
-#    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
+    mkdir "${PREFIX}/lib_hidden" || true
+    mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
 
+    # miniupnpc directory is empty. the actual location in subdirectory of miniupnp
     rmdir third-party/miniupnpc
     ln -sfn miniupnp/miniupnpc third-party/miniupnpc
 
@@ -1457,7 +1459,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
-        -DCMAKE_EXE_LINKER_FLAGS="-L${PREFIX}/lib/libcurl.a -L${PREFIX}/lib/libz.a -L${PREFIX}/lib/libzstd.a -L${PREFIX}/lib/libssl.a -L${PREFIX}/lib/libcrypto.a"
+        -DCMAKE_EXE_LINKER_FLAGS="-lz -lzstd"
 
     $MAKE
     make install
