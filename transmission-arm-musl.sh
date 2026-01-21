@@ -1252,10 +1252,10 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     #export LIBS="-lssl -lcrypto -lzstd -lz"
 
     ./configure \
-        --enable-static \
-        --enable-shared \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
+        --enable-static \
+        --enable-shared \
         --disable-debug \
         --disable-curldebug \
         --enable-http \
@@ -1272,9 +1272,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-rt \
         --disable-docs \
         --without-libpsl \
-        --with-zlib="${PREFIX}" \
-        --with-zstd="${PREFIX}" \
-        --with-openssl="${PREFIX}" \
     || handle_configure_error $?
 
     $MAKE V=1
