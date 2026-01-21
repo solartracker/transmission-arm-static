@@ -1443,6 +1443,20 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
         -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libcurl.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libssl.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libcrypto.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libz.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libzstd.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libdeflate.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libevent.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libpsl.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libnatpmp.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libminiupnpc.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libutp.a \
+        /home/evaluation/cross-arm-linux-musleabi-build/lib/libb64.a \
+        -ldl -lm" \
         -DHAVE_LIBQUOTA:BOOL=NO \
         -DHAVE_SENDFILE64:BOOL=NO \
         -DHAVE_FALLOCATE64:BOOL=NO \
@@ -1458,13 +1472,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DRUN_CLANG_TIDY:BOOL=NO \
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
-        -DWITH_SYSTEMD:BOOL=NO \
-        -DCURL_LIBRARY="${PREFIX}/lib/libcurl.a" \
-        -DZLIB_LIBRARY="${PREFIX}/lib/libz.a" \
-        -DZSTD_LIBRARY="${PREFIX}/lib/libzstd.a" \
-        -DOPENSSL_SSL_LIBRARY="${PREFIX}/lib/libssl.a" \
-        -DOPENSSL_CRYPTO_LIBRARY="${PREFIX}/lib/libcrypto.a" \
-        -DCMAKE_EXE_LINKER_FLAGS="-L${PREFIX}/lib -lz -lzstd -ldl -lm"
+        -DWITH_SYSTEMD:BOOL=NO
 
     $MAKE
     make install
