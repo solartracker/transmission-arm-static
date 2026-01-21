@@ -1443,6 +1443,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
         -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+        -DCURL_LIBRARY="${PREFIX}/lib/libcurl.a" \
+        -DZLIB_LIBRARY="${PREFIX}/lib/libz.a" \
+        -DZSTD_LIBRARY="${PREFIX}/lib/libzstd.a" \
         -DHAVE_LIBQUOTA:BOOL=NO \
         -DHAVE_SENDFILE64:BOOL=NO \
         -DHAVE_FALLOCATE64:BOOL=NO \
@@ -1458,8 +1461,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DRUN_CLANG_TIDY:BOOL=NO \
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
-        -DWITH_SYSTEMD:BOOL=NO \
-        -DCMAKE_EXE_LINKER_FLAGS="${PREFIX}/lib/libz.a ${PREFIX}/lib/libzstd.a"
+        -DWITH_SYSTEMD:BOOL=NO
 
     $MAKE
     make install
