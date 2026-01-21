@@ -1045,9 +1045,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    $MAKE zstd
-
-    make install DESTDIR="" PREFIX="${PREFIX}"
+    $MAKE
+    make install
 
     # strip and verify there are no dependencies for static build
     #finalize_build "${PREFIX}/bin/zstd"
@@ -1273,10 +1272,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-docs \
         --without-libpsl \
         --with-openssl \
-        --without-zstd \
     || handle_configure_error $?
 
-    $MAKE V=1
+    $MAKE
     make install
 
     # strip and verify there are no dependencies for static build
