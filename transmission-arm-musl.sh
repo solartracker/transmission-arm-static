@@ -1272,6 +1272,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-rt \
         --disable-docs \
         --without-libpsl \
+        --with-openssl \
     || handle_configure_error $?
 
     $MAKE V=1
