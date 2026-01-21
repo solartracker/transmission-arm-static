@@ -722,10 +722,10 @@ export RANLIB=${CROSS_PREFIX}ranlib
 export STRIP=${CROSS_PREFIX}strip
 
 CFLAGS_COMMON="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
-export CFLAGS="${CFLAGS_COMMON} -std=gnu99 -Wno-int-conversion"
+export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
 export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++17"
 export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
-export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=1"
+export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 
 case "${HOST_CPU}" in
     armv7l)
@@ -1186,6 +1186,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     export LDFLAGS="-static ${LDFLAGS}"
     export LIBS="-lzstd -lz"
+    export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
         enable-zlib enable-zstd no-zlib-dynamic \
