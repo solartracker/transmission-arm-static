@@ -939,7 +939,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     ./configure \
-        --static \
         --prefix="${PREFIX}" \
     || handle_configure_error $?
 
