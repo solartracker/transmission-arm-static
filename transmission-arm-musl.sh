@@ -886,8 +886,7 @@ fi
 )
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
-#if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
 ################################################################################
 # miniupnpc-2.2.8
 (
@@ -906,8 +905,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
     verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-
-if false; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
@@ -916,7 +913,6 @@ if false; then
     make install INSTALLPREFIX=${PREFIX}
 
     touch __package_installed
-fi
 
 fi
 )
@@ -1440,7 +1436,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
 #    mv "${PREFIX}/lib/liblz4.so"* "${PREFIX}/lib_hidden/" || true
 
-    cp -a "${SRC_ROOT}/miniupnpc/miniupnpc-2.2.8/"* "third-party/miniupnpc/"
+    ln -sfn thirdparty/miniupnp/miniupnpc thirdparty/miniupnpc
 
     rm -rf build
     mkdir -p build
