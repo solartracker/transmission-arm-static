@@ -717,7 +717,7 @@ PKG_ROOT=transmission
 
 #BUILD_TRANSMISSION_VERSION="3.00"
 BUILD_TRANSMISSION_VERSION="4.0.6"
-#BUILD_TRANSMISSION_VERSION="4.0.6+thirdparty"
+#BUILD_TRANSMISSION_VERSION="4.0.6+external_third_party"
 
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
@@ -776,19 +776,19 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_RANLIB arm-linux-musleabi-ranlib)"
     printf '%s\n' "set(CMAKE_STRIP arm-linux-musleabi-strip)"
     printf '%s\n' ""
-    printf '%s\n' "# Optional: sysroot"
-    printf '%s\n' "set(CMAKE_SYSROOT \"${SYSROOT}\")"
+#    printf '%s\n' "# Optional: sysroot"
+#    printf '%s\n' "set(CMAKE_SYSROOT \"${SYSROOT}\")"
     printf '%s\n' ""
-    printf '%s\n' "# Avoid picking host libraries"
-    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH \"${PREFIX}\")"
+#    printf '%s\n' "# Avoid picking host libraries"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH \"${PREFIX}\")"
     printf '%s\n' ""
-    printf '%s\n' "# Tell CMake to search only in sysroot"
-    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)"
-    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"
-    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)"
+#    printf '%s\n' "# Tell CMake to search only in sysroot"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"
+#    printf '%s\n' "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)"
     printf '%s\n' ""
-    printf '%s\n' "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY) # critical for skipping warning probes"
-    printf '%s\n' ""
+#    printf '%s\n' "set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY) # critical for skipping warning probes"
+#    printf '%s\n' ""
     printf '%s\n' "set(CMAKE_C_STANDARD 11)"
     printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
     printf '%s\n' ""
@@ -796,7 +796,7 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
 ################################################################################
 # libdeflate-1.25
 (
@@ -837,9 +837,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
 ################################################################################
 # libnatpmp-20230423
 (
@@ -884,9 +884,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
 ################################################################################
 # miniupnpc-2.2.8
 (
@@ -916,7 +916,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
 
 ################################################################################
 # zlib-1.3.1
@@ -1057,7 +1057,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
 ################################################################################
 # libpsl-0.21.5
 (
@@ -1096,9 +1096,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
 ################################################################################
 # libutp-20230214+git
 (
@@ -1145,9 +1145,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
 ################################################################################
 # libb64-20200908+git
 (
@@ -1183,7 +1183,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+thirdparty"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
 
 ################################################################################
 # openssl-3.6.0
