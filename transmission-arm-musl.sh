@@ -716,8 +716,8 @@ fi
 PKG_ROOT=transmission
 
 #BUILD_TRANSMISSION_VERSION="3.00"
-BUILD_TRANSMISSION_VERSION="4.0.6"
-#BUILD_TRANSMISSION_VERSION="4.0.6+external_third_party"
+BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
+#BUILD_TRANSMISSION_VERSION="4.0.6+system_third_party"
 
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
@@ -796,7 +796,7 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libdeflate-1.25
 (
@@ -837,9 +837,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libnatpmp-20230423
 (
@@ -884,9 +884,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # miniupnpc-2.2.8
 (
@@ -916,7 +916,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
 ################################################################################
 # zlib-1.3.1
@@ -1055,7 +1055,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libpsl-0.21.5
 (
@@ -1094,9 +1094,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libutp-20230214+git
 (
@@ -1143,9 +1143,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"; then
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libb64-20200908+git
 (
@@ -1181,7 +1181,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+external_third_party"
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
 ################################################################################
 # openssl-3.6.0
@@ -1410,27 +1410,43 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
 
-    #mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker"
-    #diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/100-static-cli.patch" || true
-    #diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/101-static-daemon.patch" || true
-    #diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-utils.patch" || true
+    # generate patches that could be used instead of copying entire files
+    mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker"
+    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/101-static-cli-system.patch" || true
+    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-cli-bundled.patch" || true
+    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/103-static-daemon-system.patch" || true
+    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/104-static-daemon-bundled.patch" || true
+    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/105-static-utils-system.patch" || true
+    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/106-static-utils-bundled.patch" || true
 
-    # specify explicit static library names
-#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/CMakeLists.txt" "./daemon/"
-#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/CMakeLists.txt" "./cli/"
-#    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
+    # change the shared library names (.so) to static ones (.a) with proper link order
+    if contains "${BUILD_TRANSMISSION_VERSION}" "system_third_party"; then
+        cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/system/CMakeLists.txt" "./daemon/"
+        cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/system/CMakeLists.txt" "./cli/"
+        cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/system/CMakeLists.txt" "./utils/"
+    else
+        cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/bundled/CMakeLists.txt" "./daemon/"
+        cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/bundled/CMakeLists.txt" "./cli/"
+        cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/bundled/CMakeLists.txt" "./utils/"
+    fi
 
-    # temporarily hide shared libraries from cmake
+    # temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
     mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
     mkdir "${PREFIX}/lib_hidden" || true
     mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
     mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
-#    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libpsl.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libutp.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libb64.so"* "${PREFIX}/lib_hidden/" || true
 
-    # miniupnpc directory is empty. the actual location in subdirectory of miniupnp
+    # miniupnpc directory is empty, but we can link to the actual location
     rmdir third-party/miniupnpc
     ln -sfn miniupnp/miniupnpc third-party/miniupnpc
 
@@ -1460,8 +1476,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
+        -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
-        -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc -L${PREFIX}/lib -lz -lzstd"
+        -DCMAKE_EXE_LINKER_FLAGS="-static -static-libstdc++ -static-libgcc"
 
     $MAKE
     make install
