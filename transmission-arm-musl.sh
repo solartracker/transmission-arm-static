@@ -1328,6 +1328,32 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+# temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
+hide_shared_libraries() {
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mkdir "${PREFIX}/lib_hidden" || true
+    mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libpsl.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libutp.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libb64.so"* "${PREFIX}/lib_hidden/" || true
+    return 0
+}
+
+# restore the hidden shared libraries
+restore_shared_libraries() {
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    rmdir "${PREFIX}/lib_hidden" || true
+    return 0
+}
+
 if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"; then
 ################################################################################
 # transmission-3.00
@@ -1351,6 +1377,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
 
+    # temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
+    hide_shared_libraries
+
     export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt"
 
     LDFLAGS="-static ${LDFLAGS}" \
@@ -1372,6 +1401,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
     make install DESTDIR="" PREFIX="${PREFIX}"
+
+    # restore the hidden shared libraries
+    restore_shared_libraries
 
     # strip and verify there are no dependencies for static build
     finalize_build \
@@ -1431,20 +1463,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     fi
 
     # temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libpsl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libutp.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libb64.so"* "${PREFIX}/lib_hidden/" || true
+    hide_shared_libraries
 
     # miniupnpc directory is empty, but we can link to the actual location
     rmdir third-party/miniupnpc
@@ -1486,8 +1505,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd ..
 
     # restore the hidden shared libraries
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    rmdir "${PREFIX}/lib_hidden" || true
+    restore_shared_libraries
 
     # strip and verify there are no dependencies for static build
     finalize_build \
