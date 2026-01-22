@@ -1423,6 +1423,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     # temporarily hide shared libraries from cmake
     mkdir "${PREFIX}/lib_hidden" || true
     mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
 #    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
 #    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
 #    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
