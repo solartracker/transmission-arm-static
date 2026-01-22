@@ -1254,8 +1254,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --prefix="${PREFIX}" \
         --host="${HOST}" \
         --enable-static \
-        --disable-shared \
-        --enable-libgcc \
+        --enable-shared \
         --disable-debug \
         --disable-curldebug \
         --enable-http \
@@ -1467,8 +1466,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd ..
 
     # restore the hidden shared libraries
-#    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-#    rmdir "${PREFIX}/lib_hidden" || true
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    rmdir "${PREFIX}/lib_hidden" || true
 
     # strip and verify there are no dependencies for static build
     finalize_build \
