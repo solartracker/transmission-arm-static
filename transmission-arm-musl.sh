@@ -1459,7 +1459,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
-        -DCMAKE_EXE_LINKER_FLAGS="-static -L${PREFIX}/lib -lz -lzstd"
+        -DCMAKE_EXE_LINKER_FLAGS="-L${PREFIX}/lib -lz -lzstd"
 
     $MAKE
     make install
