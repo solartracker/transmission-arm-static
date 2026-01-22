@@ -1422,12 +1422,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
 
     # temporarily hide shared libraries from cmake
-    mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
+#    mkdir "${PREFIX}/lib_hidden" || true
+#    mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
+#    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
 
     # miniupnpc directory is empty. the actual location in subdirectory of miniupnp
     rmdir third-party/miniupnpc
@@ -1443,7 +1443,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
         -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static "\
         -DHAVE_LIBQUOTA:BOOL=NO \
         -DHAVE_SENDFILE64:BOOL=NO \
         -DHAVE_FALLOCATE64:BOOL=NO \
@@ -1459,7 +1458,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DRUN_CLANG_TIDY:BOOL=NO \
         -DWITH_INOTIFY:BOOL=YES \
         -DWITH_KQUEUE:BOOL=NO \
-        -DWITH_SYSTEMD:BOOL=NO
+        -DWITH_SYSTEMD:BOOL=NO \
+        -DCMAKE_EXE_LINKER_FLAGS="-static -L${PREFIX}/lib -lz -lzstd"
 
     $MAKE
     make install
