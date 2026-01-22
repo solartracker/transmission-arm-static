@@ -1460,7 +1460,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         -DWITH_KQUEUE:BOOL=NO \
         -DWITH_SYSTEMD:BOOL=NO \
         -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" \
-        -DCMAKE_EXE_LINKER_FLAGS="-L${PREFIX}/lib -lz -lzstd"
+        -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc -L${PREFIX}/lib -lz -lzstd"
 
     $MAKE
     make install
