@@ -1421,6 +1421,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    cp -p "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/CMakeLists.txt" "./utils/"
 
     # temporarily hide shared libraries from cmake
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
     mkdir "${PREFIX}/lib_hidden" || true
     mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
     mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
