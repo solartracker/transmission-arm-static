@@ -1000,7 +1000,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     ./configure \
         --enable-year2038 \
         --enable-static \
-        --enable-shared \
+        --disable-shared \
         --disable-nls \
         --disable-rpath \
         --disable-scripts \
@@ -1208,7 +1208,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
     ./Configure linux-armv4 no-asm \
-        enable-zlib-dynamic enable-zstd-dynamic enable-shared \
+        enable-zlib enable-zstd no-shared \
         no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
         no-err no-async \
         no-aria no-sm2 no-sm3 no-sm4 \
@@ -1223,6 +1223,48 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     # strip and verify there are no dependencies for static build
     #finalize_build "${PREFIX}/bin/openssl"
+
+    touch __package_installed
+fi
+)
+################################################################################
+# libidn2-2.3.8
+(
+PKG_NAME=libidn2
+PKG_VERSION=2.3.8
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/libidn/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="f557911bf6171621e1f72ff35f5b1825bb35b52ed45325dcdee931e5d3c0787a"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --enable-static \
+        --disable-shared \
+        --disable-rpath \
+        --disable-nls \
+        --disable-doc \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --without-libiconv-prefix \
+        --without-libunistring-prefix \
+        --without-libintl-prefix \
+        --enable-year2038 \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
 
     touch __package_installed
 fi
@@ -1248,13 +1290,13 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    #export LIBS="-lssl -lcrypto -lzstd -lz"
+    export LIBS="-lidn2 -lssl -lcrypto -lzstd -lz"
 
     ./configure \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
         --enable-static \
-        --enable-shared \
+        --disable-shared \
         --disable-debug \
         --disable-curldebug \
         --enable-http \
@@ -1272,7 +1314,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-docs \
         --without-libpsl \
         --with-openssl \
-        --with-libz \
+        --with-zlib \
         --with-zstd \
     || handle_configure_error $?
 
@@ -1312,7 +1354,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --prefix="${PREFIX}" \
         --host="${HOST}" \
         --enable-static \
-        --enable-shared \
+        --disable-shared \
         --disable-debug-mode \
         --disable-libevent-regress \
         --disable-samples \
@@ -1332,7 +1374,7 @@ fi
 hide_shared_libraries() {
     mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
     mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/libevent.so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib/libevent"*".so"* "${PREFIX}/lib_hidden/" || true
     mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
     mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
     mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
