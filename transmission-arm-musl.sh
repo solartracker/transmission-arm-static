@@ -1636,13 +1636,14 @@ fi # if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"
 if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
 generate_patches_for_static_linking() {
     # generate patches
-    mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker"
-    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/101-static-cli-system.patch" || true
-    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/102-static-cli-bundled.patch" || true
-    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/103-static-daemon-system.patch" || true
-    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/104-static-daemon-bundled.patch" || true
-    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/105-static-utils-system.patch" || true
-    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/106-static-utils-bundled.patch" || true
+    mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/system"
+    mkdir -p "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/bundled"
+    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/system/101-static-cli-system.patch" || true
+    diff -u "./cli/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/cli/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/bundled/102-static-cli-bundled.patch" || true
+    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/system/103-static-daemon-system.patch" || true
+    diff -u "./daemon/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/daemon/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/bundled/104-static-daemon-bundled.patch" || true
+    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/system/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/system/105-static-utils-system.patch" || true
+    diff -u "./utils/CMakeLists.txt" "${SCRIPT_DIR}/files/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/utils/bundled/CMakeLists.txt" >"${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/bundled/106-static-utils-bundled.patch" || true
 
     # change the shared library names (.so) to static ones (.a) with proper link order
     if contains "${BUILD_TRANSMISSION_VERSION}" "system_third_party"; then
