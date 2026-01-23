@@ -1296,7 +1296,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     export LIBS="-lidn2 -lssl -lcrypto -lzstd -lz"
 
-    LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
@@ -1323,7 +1322,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --with-zstd \
     || handle_configure_error $?
 
-    $MAKE
+    $MAKE LDFLAGS="-static -all-static ${LDFLAGS}"
     make install
 
     # strip and verify there are no dependencies for static build
