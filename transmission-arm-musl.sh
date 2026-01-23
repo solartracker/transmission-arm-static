@@ -1045,11 +1045,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    $MAKE
+    $MAKE \
+        LDFLAGS="-static ${LDFLAGS}" \
+        CFLAGS="${CFLAGS}" \
+        LIBS="${PREFIX}/lib/libz.a ${PREFIX}/lib/liblzma.a ${PREFIX}/lib/liblz4.a"
+
     make install
 
     # strip and verify there are no dependencies for static build
-    #finalize_build "${PREFIX}/bin/zstd"
+    finalize_build "${PREFIX}/bin/zstd"
 
     touch __package_installed
 fi
@@ -1203,7 +1207,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    export LDFLAGS="${LDFLAGS}"
+    export LDFLAGS="-static ${LDFLAGS}"
     export LIBS="-lzstd -lz"
     export CFLAGS="${CFLAGS} -Wno-int-conversion"
 
@@ -1222,7 +1226,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     make install
 
     # strip and verify there are no dependencies for static build
-    #finalize_build "${PREFIX}/bin/openssl"
+    finalize_build "${PREFIX}/bin/openssl"
 
     touch __package_installed
 fi
@@ -1292,6 +1296,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     export LIBS="-lidn2 -lssl -lcrypto -lzstd -lz"
 
+    LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --prefix="${PREFIX}" \
         --host="${HOST}" \
