@@ -1,0 +1,33 @@
+--- a/utils/CMakeLists.txt	2024-05-28 21:36:14.000000000 -0400
++++ b/utils/CMakeLists.txt	2026-01-23 00:12:37.149390299 -0500
+@@ -7,10 +7,27 @@
+ 
+     target_link_libraries(${TR_NAME}-${P}
+         PRIVATE
++            ${LIBTRANSMISSION_LIB}
+             ${TR_NAME}
+-            CURL::libcurl
+-            fmt::fmt-header-only
+-            libevent::event)
++            ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
++            ${CMAKE_INSTALL_PREFIX}/lib/libidn2.a
++            ${CMAKE_INSTALL_PREFIX}/lib/libz.a
++            ${CMAKE_INSTALL_PREFIX}/lib/libzstd.a
++            ${CMAKE_INSTALL_PREFIX}/lib/libssl.a
++            ${CMAKE_INSTALL_PREFIX}/lib/libcrypto.a
++            ${CMAKE_BINARY_DIR}/third-party/libdeflate.bld/pfx/lib/libdeflate.a
++            ${CMAKE_BINARY_DIR}/third-party/libpsl.bld/pfx/lib/libpsl.a
++            ${CMAKE_BINARY_DIR}/third-party/libnatpmp.bld/pfx/lib/libnatpmp.a
++            ${CMAKE_BINARY_DIR}/third-party/miniupnpc.bld/pfx/lib/libminiupnpc.a
++            ${CMAKE_BINARY_DIR}/third-party/dht/libdht.a
++            ${CMAKE_BINARY_DIR}/third-party/libutp.bld/libutp.a
++            ${CMAKE_BINARY_DIR}/third-party/libb64.bld/src/libb64.a
++            ${CMAKE_BINARY_DIR}/third-party/jsonsl/libjsonsl.a
++            ${CMAKE_BINARY_DIR}/third-party/wildmat/libwildmat.a
++            ${CMAKE_INSTALL_PREFIX}/lib/libevent.a
++            -lm
++            -ldl
++    )
+ 
+     tr_win32_app_info(${TR_NAME}-${P}
+         "Transmission Utility ('${P}')"

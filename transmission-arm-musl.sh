@@ -1516,8 +1516,12 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
 
     # change the shared library names (.so) to static ones (.a) with proper link order
-    #apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker" "."
-    generate_patches_for_static_linking
+    if contains "${BUILD_TRANSMISSION_VERSION}" "system_third_party"; then
+        apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/system" "."
+    else
+        apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/bundled" "."
+    fi
+    #generate_patches_for_static_linking
 
     # temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
     hide_shared_libraries
