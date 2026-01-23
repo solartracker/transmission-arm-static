@@ -10,6 +10,7 @@ foreach(P create edit remote show)
             ${LIBTRANSMISSION_LIB}
             ${TR_NAME}
             ${CMAKE_INSTALL_PREFIX}/lib/libcurl.a
+            ${CMAKE_INSTALL_PREFIX}/lib/libidn2.a
             ${CMAKE_INSTALL_PREFIX}/lib/libz.a
             ${CMAKE_INSTALL_PREFIX}/lib/libzstd.a
             ${CMAKE_INSTALL_PREFIX}/lib/libssl.a
