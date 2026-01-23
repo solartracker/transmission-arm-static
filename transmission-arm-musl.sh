@@ -716,8 +716,8 @@ fi
 PKG_ROOT=transmission
 
 #BUILD_TRANSMISSION_VERSION="3.00"
-BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
-#BUILD_TRANSMISSION_VERSION="4.0.6+system_third_party"
+#BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
+BUILD_TRANSMISSION_VERSION="4.0.6+system_third_party"
 
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
@@ -839,85 +839,6 @@ fi
 )
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
 
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
-################################################################################
-# libnatpmp-20230423
-(
-PKG_NAME=libnatpmp
-PKG_VERSION=20230423
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://miniupnp.tuxfamily.org/files/download.php?file=${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="0684ed2c8406437e7519a1bd20ea83780db871b3a3a5d752311ba3e889dbfc70"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}"
-cd "${SRC_ROOT}/${PKG_NAME}"
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker" "."
-
-    $MAKE CC=${CC} CFLAGS="${CFLAGS} -DENABLE_STRNATPMPERR"
-    make install INSTALLPREFIX=${PREFIX}
-
-#    rm -rf build
-#    mkdir -p build
-#    cd build
-#
-#    cmake .. \
-#        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
-#        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-#        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
-#        -DCMAKE_PREFIX_PATH="${PREFIX}" \
-#        -DCMAKE_INSTALL_PREFIX="${PREFIX}"
-#
-#    $MAKE
-#    make install
-#
-#    cd ..
-
-    touch __package_installed
-fi
-)
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
-
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
-################################################################################
-# miniupnpc-2.2.8
-(
-PKG_NAME=miniupnpc
-PKG_VERSION=2.2.8
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://miniupnp.tuxfamily.org/files/download.php?file=${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="05b929679091b9921b6b6c1f25e39e4c8d1f4d46c8feb55a412aa697aee03a93"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}"
-cd "${SRC_ROOT}/${PKG_NAME}"
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
-
-    $MAKE CC=${CC} CFLAGS="${CFLAGS}"
-    make install INSTALLPREFIX=${PREFIX}
-
-    touch __package_installed
-
-fi
-)
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
-
 ################################################################################
 # zlib-1.3.1
 (
@@ -944,6 +865,49 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     $MAKE
     make install
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# bzip2-1.0.8
+(
+PKG_NAME=bzip2
+PKG_VERSION=1.0.8
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://sourceware.org/pub/${PKG_NAME}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    export CFLAGS="${CFLAGS} -static"
+
+    make distclean || true
+
+    $MAKE \
+        CC="$CC" \
+        AR="$AR" \
+        RANLIB="$RANLIB" \
+        CFLAGS="$CFLAGS" \
+        bzip2 bzip2recover libbz2.a
+
+    make install
+
+    finalize_build \
+        "${PREFIX}/bin/bzip2" \
+        "${PREFIX}/bin/bunzip2" \
+        "${PREFIX}/bin/bzcat" \
+        "${PREFIX}/bin/bzip2recover"
 
     touch __package_installed
 fi
@@ -1059,6 +1023,250 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 
+################################################################################
+# libiconv-1.18
+(
+PKG_NAME=libiconv
+PKG_VERSION=1.18
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/${PKG_NAME}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="012093e3d7720c75834b21bd251251ba5da614b8a4f54fb73acd8412be83142f"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --enable-static \
+        --disable-shared \
+        --disable-rpath \
+        --disable-nls \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --enable-year2038 \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# libunistring-1.4.1
+(
+PKG_NAME=libunistring
+PKG_VERSION=1.4.1
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/${PKG_NAME}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="12542ad7619470efd95a623174dcd4b364f2483caf708c6bee837cb53a54cb9d"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --enable-static \
+        --disable-shared \
+        --disable-rpath \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --enable-year2038 \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# gettext-0.26
+(
+PKG_NAME=gettext
+PKG_VERSION=0.26
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/${PKG_NAME}/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="39acf4b0371e9b110b60005562aace5b3631fed9b1bb9ecccfc7f56e58bb1d7f"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --enable-static \
+        --disable-shared \
+        --disable-rpath \
+        --disable-nls \
+        --disable-tools \
+        --disable-csharp \
+        --disable-java \
+        --disable-modula2 \
+        --disable-d \
+        --disable-libasprintf \
+        --disable-openmp \
+        --disable-curses \
+        --without-gettext \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --enable-year2038 \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    touch __package_installed
+fi
+)
+
+################################################################################
+# libidn2-2.3.8
+(
+PKG_NAME=libidn2
+PKG_VERSION=2.3.8
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://ftp.gnu.org/gnu/libidn/${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="f557911bf6171621e1f72ff35f5b1825bb35b52ed45325dcdee931e5d3c0787a"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
+        --enable-static \
+        --disable-shared \
+        --disable-rpath \
+        --disable-nls \
+        --disable-doc \
+        --disable-dependency-tracking \
+        --disable-silent-rules \
+        --enable-year2038 \
+    || handle_configure_error $?
+
+    $MAKE
+    make install
+
+    touch __package_installed
+fi
+)
+
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
+################################################################################
+# libnatpmp-20230423
+(
+PKG_NAME=libnatpmp
+PKG_VERSION=20230423
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://miniupnp.tuxfamily.org/files/download.php?file=${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="0684ed2c8406437e7519a1bd20ea83780db871b3a3a5d752311ba3e889dbfc70"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker" "."
+
+    $MAKE CC=${CC} CFLAGS="${CFLAGS} -DENABLE_STRNATPMPERR"
+    make install INSTALLPREFIX=${PREFIX}
+
+#    rm -rf build
+#    mkdir -p build
+#    cd build
+#
+#    cmake .. \
+#        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+#        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+#        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
+#        -DCMAKE_PREFIX_PATH="${PREFIX}" \
+#        -DCMAKE_INSTALL_PREFIX="${PREFIX}"
+#
+#    $MAKE
+#    make install
+#
+#    cd ..
+
+    touch __package_installed
+fi
+)
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
+
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
+################################################################################
+# miniupnpc-2.2.8
+(
+PKG_NAME=miniupnpc
+PKG_VERSION=2.2.8
+PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_SOURCE_URL="https://miniupnp.tuxfamily.org/files/download.php?file=${PKG_SOURCE}"
+PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
+PKG_HASH="05b929679091b9921b6b6c1f25e39e4c8d1f4d46c8feb55a412aa697aee03a93"
+
+mkdir -p "${SRC_ROOT}/${PKG_NAME}"
+cd "${SRC_ROOT}/${PKG_NAME}"
+
+if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
+    rm -rf "${PKG_SOURCE_SUBDIR}"
+    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
+    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
+    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
+    cd "${PKG_SOURCE_SUBDIR}"
+
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
+
+    $MAKE CC=${CC} CFLAGS="${CFLAGS}"
+    make install INSTALLPREFIX=${PREFIX}
+
+    touch __package_installed
+
+fi
+)
+fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"
+
 if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libpsl-0.21.5
@@ -1086,6 +1294,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-nls \
         --disable-rpath \
         --disable-dependency-tracking \
+        --disable-runtime \
         --without-libiconv-prefix \
         --without-libintl-prefix \
         --prefix="${PREFIX}" \
@@ -1227,48 +1436,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     # strip and verify there are no dependencies for static build
     finalize_build "${PREFIX}/bin/openssl"
-
-    touch __package_installed
-fi
-)
-################################################################################
-# libidn2-2.3.8
-(
-PKG_NAME=libidn2
-PKG_VERSION=2.3.8
-PKG_SOURCE="${PKG_NAME}-${PKG_VERSION}.tar.gz"
-PKG_SOURCE_URL="https://ftp.gnu.org/gnu/libidn/${PKG_SOURCE}"
-PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
-PKG_HASH="f557911bf6171621e1f72ff35f5b1825bb35b52ed45325dcdee931e5d3c0787a"
-
-mkdir -p "${SRC_ROOT}/${PKG_NAME}"
-cd "${SRC_ROOT}/${PKG_NAME}"
-
-if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
-    rm -rf "${PKG_SOURCE_SUBDIR}"
-    download_archive "${PKG_SOURCE_URL}" "${PKG_SOURCE}" "."
-    verify_hash "${PKG_SOURCE}" "${PKG_HASH}"
-    unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
-    cd "${PKG_SOURCE_SUBDIR}"
-
-    ./configure \
-        --prefix="${PREFIX}" \
-        --host="${HOST}" \
-        --enable-static \
-        --disable-shared \
-        --disable-rpath \
-        --disable-nls \
-        --disable-doc \
-        --disable-dependency-tracking \
-        --disable-silent-rules \
-        --without-libiconv-prefix \
-        --without-libunistring-prefix \
-        --without-libintl-prefix \
-        --enable-year2038 \
-    || handle_configure_error $?
-
-    $MAKE
-    make install
 
     touch __package_installed
 fi
