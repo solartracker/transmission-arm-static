@@ -901,7 +901,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         CFLAGS="$CFLAGS" \
         bzip2 bzip2recover libbz2.a
 
-    make install
+    make install PREFIX="${PREFIX}"
 
     finalize_build \
         "${PREFIX}/bin/bzip2" \
