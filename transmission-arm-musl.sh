@@ -647,6 +647,7 @@ create_install_package()
     echo "[*] Creating the install package..."
     mkdir -p "${CACHED_DIR}"
     rm -f "${pkg_path}"
+    rm -f "${pkg_path}.sha256"
     cleanup() { rm -f "${temp_path}"; }
     trap 'cleanup; exit 130' INT
     trap 'cleanup; exit 143' TERM
