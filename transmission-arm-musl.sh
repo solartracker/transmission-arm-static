@@ -634,15 +634,19 @@ finalize_build() {
 
 create_install_package()
 ( # BEGIN sub-shell
-    local target_cpu=armv7
-    local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${target_cpu}.tar.xz"
+    [ -n "$PKG_ROOT" ]            || return 1
+    [ -n "$PKG_ROOT_VERSION" ]    || return 1
+    [ -n "$PKG_ROOT_RELEASE" ]    || return 1
+    [ -n "$PKG_TARGET_CPU" ]      || return 1
+    [ -n "$CACHED_DIR" ]          || return 1
+    local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}".tar.xz"
     local pkg_path="${CACHED_DIR}/${pkg_file}"
-    [ ! -f "${pkg_path}" ] || return 0
     local temp_path=""
     local timestamp=""
 
     echo "[*] Creating the install package..."
     mkdir -p "${CACHED_DIR}"
+    rm -f "${pkg_path}"
     cleanup() { rm -f "${temp_path}"; }
     trap 'cleanup; exit 130' INT
     trap 'cleanup; exit 143' TERM
@@ -759,6 +763,7 @@ PKG_ROOT=transmission
 BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
 #BUILD_TRANSMISSION_VERSION="4.0.6+system_third_party"
+PKG_TARGET_CPU=armv7
 
 export PREFIX="${CROSSBUILD_DIR}"
 export HOST=${TARGET}
