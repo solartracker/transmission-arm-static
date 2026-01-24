@@ -92,6 +92,7 @@ sign_file()
         #printf '\n'
         printf '%s  %s\n' "${target_file_hash}" "${target_file}"
     } >"${temp_path}" || return 1
+    chmod --reference="${target_path}" "${temp_path}" || return 1
     touch -r "${target_path}" "${temp_path}" || return 1
     mv -f "${temp_path}" "${sign_path}" || return 1
     # TODO: implement signing
@@ -662,6 +663,7 @@ create_install_package()
     fi
 
     touch -d "${timestamp}" "${temp_path}" || return 1
+    chmod 644 "${temp_path}" || return 1
     mv -f "${temp_path}" "${pkg_path}" || return 1
     trap - EXIT INT TERM
     sign_file "${pkg_path}"
