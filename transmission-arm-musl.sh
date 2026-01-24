@@ -635,17 +635,20 @@ finalize_build() {
 create_install_package()
 ( # BEGIN sub-shell
     local target_cpu=armv7
-    local timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
     local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${target_cpu}.tar.xz"
     local pkg_path="${CACHED_DIR}/${pkg_file}"
+    [ ! -f "${pkg_path}" ] || return 0
     local temp_path=""
-    mkdir -p "${CACHED_DIR}"
+    local timestamp=""
 
+    echo "[*] Creating the install package..."
+    mkdir -p "${CACHED_DIR}"
     cleanup() { rm -f "${temp_path}"; }
     trap 'cleanup; exit 130' INT
     trap 'cleanup; exit 143' TERM
     trap 'cleanup' EXIT
     temp_path=$(mktemp "${pkg_path}.XXXXXX")
+    timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
     if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
             --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
             -C "${PREFIX}" "$@" \
@@ -657,6 +660,16 @@ create_install_package()
     mv -f "${temp_path}" "${pkg_path}" || return 1
     trap - EXIT INT TERM
     sign_file "${pkg_path}"
+
+    echo ""
+    echo ""
+    echo "[*] Finished."
+    echo ""
+    echo ""
+    echo "Install package is here:"
+    echo "${pkg_path}"
+    echo ""
+    echo ""
 
     return 0
 ) # END sub-shell
@@ -1792,21 +1805,11 @@ echo ""
 echo "[*] Finished building Transmission ${BUILD_TRANSMISSION_VERSION}"
 echo ""
 echo ""
-echo "[*] Now creating the install package..."
 create_install_package "bin/transmission-cli" \
                        "bin/transmission-create" \
                        "bin/transmission-daemon" \
                        "bin/transmission-edit" \
                        "bin/transmission-remote" \
                        "bin/transmission-show" \
-                       "share/transmission/public_html"
-echo ""
-echo ""
-echo "[*] Finished."
-echo ""
-echo ""
-echo "Install package is here:"
-echo "${pkg_path}"
-echo ""
-echo ""
+                       "share/transmission/public_html/*"
 
