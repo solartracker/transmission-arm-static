@@ -714,7 +714,6 @@ fi
 # General
 
 PKG_ROOT=transmission
-
 BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
 #BUILD_TRANSMISSION_VERSION="4.0.6+system_third_party"
@@ -1569,6 +1568,8 @@ restore_shared_libraries() {
 }
 
 if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"; then
+PKG_ROOT_VERSION="3.00"
+PKG_ROOT_RELEASE=1
 ################################################################################
 # transmission-3.00
 (
@@ -1660,6 +1661,8 @@ generate_patches_for_static_linking() {
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
+PKG_ROOT_VERSION="4.0.6"
+PKG_ROOT_RELEASE=1
 ################################################################################
 # transmission-4.0.6
 (
@@ -1749,4 +1752,57 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
+
+
+################################################################################
+# Build the install package
+#
+set +x
+echo ""
+echo ""
+echo "[*] Finished building Transmission ${BUILD_TRANSMISSION_VERSION}"
+echo ""
+echo ""
+echo "[*] Now creating the install package."
+echo ""
+echo ""
+(
+    local target_cpu=armv7
+    local timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
+    local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${target_cpu}.tar.xz"
+    local pkg_path="${CACHED_DIR}/${pkg_file}"
+    local temp_path=""
+    mkdir -p "${CACHED_DIR}"
+
+    cleanup() { rm -f "${temp_path}"; }
+    trap 'cleanup; exit 130' INT
+    trap 'cleanup; exit 143' TERM
+    trap 'cleanup' EXIT
+    temp_path=$(mktemp "${pkg_path}.XXXXXX")
+    if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
+            --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
+            -C "${PREFIX}" \
+            "bin/transmission-cli" \
+            "bin/transmission-create" \
+            "bin/transmission-daemon" \
+            "bin/transmission-edit" \
+            "bin/transmission-remote" \
+            "bin/transmission-show" \
+            "share/transmission/public_html" \
+            -cv | xz -zc -7e -T0 >"${temp_path}"; then
+        return 1
+    fi
+
+    touch -d "${timestamp}" "${temp_path}" || return 1
+    mv -f "${temp_path}" "${pkg_path}" || return 1
+    trap - EXIT INT TERM
+    sign_file "${pkg_path}"
+)
+echo "[*] Finished."
+echo ""
+echo ""
+echo "Install package is here:"
+echo "${pkg_path}"
+echo ""
+echo ""
 
