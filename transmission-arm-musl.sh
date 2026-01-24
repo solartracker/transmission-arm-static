@@ -632,6 +632,35 @@ finalize_build() {
     return 0
 }
 
+create_install_package()
+( # BEGIN sub-shell
+    local target_cpu=armv7
+    local timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
+    local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${target_cpu}.tar.xz"
+    local pkg_path="${CACHED_DIR}/${pkg_file}"
+    local temp_path=""
+    mkdir -p "${CACHED_DIR}"
+
+    cleanup() { rm -f "${temp_path}"; }
+    trap 'cleanup; exit 130' INT
+    trap 'cleanup; exit 143' TERM
+    trap 'cleanup' EXIT
+    temp_path=$(mktemp "${pkg_path}.XXXXXX")
+    if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
+            --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
+            -C "${PREFIX}" "$@" \
+            -cv | xz -zc -7e -T0 >"${temp_path}"; then
+        return 1
+    fi
+
+    touch -d "${timestamp}" "${temp_path}" || return 1
+    mv -f "${temp_path}" "${pkg_path}" || return 1
+    trap - EXIT INT TERM
+    sign_file "${pkg_path}"
+
+    return 0
+) # END sub-shell
+
 
 ################################################################################
 # Install the build environment
@@ -1755,7 +1784,7 @@ fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 
 ################################################################################
-# Build the install package
+# Create install package
 #
 set +x
 echo ""
@@ -1763,41 +1792,16 @@ echo ""
 echo "[*] Finished building Transmission ${BUILD_TRANSMISSION_VERSION}"
 echo ""
 echo ""
-echo "[*] Now creating the install package."
+echo "[*] Now creating the install package..."
+create_install_package "bin/transmission-cli" \
+                       "bin/transmission-create" \
+                       "bin/transmission-daemon" \
+                       "bin/transmission-edit" \
+                       "bin/transmission-remote" \
+                       "bin/transmission-show" \
+                       "share/transmission/public_html"
 echo ""
 echo ""
-(
-    local target_cpu=armv7
-    local timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
-    local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${target_cpu}.tar.xz"
-    local pkg_path="${CACHED_DIR}/${pkg_file}"
-    local temp_path=""
-    mkdir -p "${CACHED_DIR}"
-
-    cleanup() { rm -f "${temp_path}"; }
-    trap 'cleanup; exit 130' INT
-    trap 'cleanup; exit 143' TERM
-    trap 'cleanup' EXIT
-    temp_path=$(mktemp "${pkg_path}.XXXXXX")
-    if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
-            --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
-            -C "${PREFIX}" \
-            "bin/transmission-cli" \
-            "bin/transmission-create" \
-            "bin/transmission-daemon" \
-            "bin/transmission-edit" \
-            "bin/transmission-remote" \
-            "bin/transmission-show" \
-            "share/transmission/public_html" \
-            -cv | xz -zc -7e -T0 >"${temp_path}"; then
-        return 1
-    fi
-
-    touch -d "${timestamp}" "${temp_path}" || return 1
-    mv -f "${temp_path}" "${pkg_path}" || return 1
-    trap - EXIT INT TERM
-    sign_file "${pkg_path}"
-)
 echo "[*] Finished."
 echo ""
 echo ""
