@@ -1817,5 +1817,5 @@ create_install_package "bin/transmission-cli" \
                        "bin/transmission-edit" \
                        "bin/transmission-remote" \
                        "bin/transmission-show" \
-                       "share/transmission/public_html/*"
+                       "share/transmission"
 
