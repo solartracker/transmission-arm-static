@@ -663,7 +663,7 @@ create_install_package()
         trap 'cleanup; exit 143' TERM
         trap 'cleanup' EXIT
         temp_path=$(mktemp "${pkg_path}.XXXXXX")
-        timestamp="@$(stat -c %Y "${1}")"
+        timestamp="@$(stat -c %Y "${PREFIX}/${1}")"
         if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
                 --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
                 -C "${PREFIX}" "$@" \
