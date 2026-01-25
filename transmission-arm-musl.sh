@@ -655,12 +655,21 @@ create_install_package()
     trap 'cleanup' EXIT
     temp_path=$(mktemp "${pkg_path}.XXXXXX")
     timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
+
     if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
             --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
             -C "${PREFIX}" "$@" \
-            -cv | xz -zc -7e -T0 >"${temp_path}"; then
+            -cv | gzip -9 -n >"${temp_path}"; then
         return 1
     fi
+
+    ## better compression, but sometimes not available on older ARM devices
+    #if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
+    #        --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
+    #        -C "${PREFIX}" "$@" \
+    #        -cv | xz -zc -7e -T0 >"${temp_path}"; then
+    #    return 1
+    #fi
 
     touch -d "${timestamp}" "${temp_path}" || return 1
     chmod 644 "${temp_path}" || return 1
