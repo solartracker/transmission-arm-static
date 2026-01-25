@@ -645,6 +645,7 @@ create_install_package()
     for fmt in gz xz; do
         local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.${fmt}"
         local pkg_path="${CACHED_DIR}/${pkg_file}"
+        local pkg_files=""
         local temp_path=""
         local timestamp=""
         local compressor=""
@@ -675,6 +676,8 @@ create_install_package()
         mv -f "${temp_path}" "${pkg_path}" || return 1
         trap - EXIT INT TERM
         sign_file "${pkg_path}"
+
+        pkg_files="${pkg_files}$(printf '%s\n' "${pkg_path}")"
     done
 
     echo ""
@@ -683,7 +686,7 @@ create_install_package()
     echo ""
     echo ""
     echo "Install package is here:"
-    echo "${pkg_path}"
+    echo "${pkg_files}"
     echo ""
     echo ""
 
