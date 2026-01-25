@@ -642,10 +642,10 @@ create_install_package()
     [ -n "$PKG_TARGET_CPU" ]      || return 1
     [ -n "$CACHED_DIR" ]          || return 1
 
+    local pkg_files=""
     for fmt in gz xz; do
         local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.${fmt}"
         local pkg_path="${CACHED_DIR}/${pkg_file}"
-        local pkg_files=""
         local temp_path=""
         local timestamp=""
         local compressor=""
