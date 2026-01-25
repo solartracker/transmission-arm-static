@@ -633,6 +633,22 @@ finalize_build() {
     return 0
 }
 
+# temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
+hide_shared_libraries() {
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mkdir "${PREFIX}/lib_hidden" || true
+    mv "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
+    mv "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
+    return 0
+}
+
+# restore the hidden shared libraries
+restore_shared_libraries() {
+    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    rmdir "${PREFIX}/lib_hidden" || true
+    return 0
+}
+
 create_install_package()
 ( # BEGIN sub-shell
     [ "$#" -gt 0 ] || return 1
@@ -1601,33 +1617,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     touch __package_installed
 fi
 )
-
-# temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
-hide_shared_libraries() {
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/libevent"*".so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libcurl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libidn2.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libssl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libcrypto.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libz.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libzstd.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libdeflate.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libpsl.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libnatpmp.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libminiupnpc.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libutp.so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib/libb64.so"* "${PREFIX}/lib_hidden/" || true
-    return 0
-}
-
-# restore the hidden shared libraries
-restore_shared_libraries() {
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    rmdir "${PREFIX}/lib_hidden" || true
-    return 0
-}
 
 if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"; then
 PKG_ROOT_VERSION="3.00"
