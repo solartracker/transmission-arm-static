@@ -677,7 +677,7 @@ create_install_package()
         trap - EXIT INT TERM
         sign_file "${pkg_path}"
 
-        pkg_files="${pkg_files}$(printf '%s\n' "${pkg_path}")"
+        pkg_files="${pkg_files}${pkg_path}\n"
     done
 
     echo ""
