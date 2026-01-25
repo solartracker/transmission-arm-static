@@ -635,47 +635,47 @@ finalize_build() {
 
 create_install_package()
 ( # BEGIN sub-shell
+    [ "$#" -gt 0 ] || return 1
     [ -n "$PKG_ROOT" ]            || return 1
     [ -n "$PKG_ROOT_VERSION" ]    || return 1
     [ -n "$PKG_ROOT_RELEASE" ]    || return 1
     [ -n "$PKG_TARGET_CPU" ]      || return 1
     [ -n "$CACHED_DIR" ]          || return 1
-    local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.gz"
-    local pkg_path="${CACHED_DIR}/${pkg_file}"
-    local temp_path=""
-    local timestamp=""
 
-    echo "[*] Creating the install package..."
-    mkdir -p "${CACHED_DIR}"
-    rm -f "${pkg_path}"
-    rm -f "${pkg_path}.sha256"
-    cleanup() { rm -f "${temp_path}"; }
-    trap 'cleanup; exit 130' INT
-    trap 'cleanup; exit 143' TERM
-    trap 'cleanup' EXIT
-    temp_path=$(mktemp "${pkg_path}.XXXXXX")
-    timestamp="@$(stat -c %Y "${PREFIX}/bin/transmission-daemon")"
+    for fmt in gz xz; do
+        local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.${fmt}"
+        local pkg_path="${CACHED_DIR}/${pkg_file}"
+        local temp_path=""
+        local timestamp=""
+        local compressor=""
 
-    if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
-            --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
-            -C "${PREFIX}" "$@" \
-            -cv | gzip -9 -n >"${temp_path}"; then
-        return 1
-    fi
+        case "$fmt" in
+            gz) compressor="gzip -9 -n" ;;
+            xz) compressor="xz -zc -7e -T0" ;;
+        esac
 
-    ## better compression, but sometimes not available on older ARM devices
-    #if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
-    #        --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
-    #        -C "${PREFIX}" "$@" \
-    #        -cv | xz -zc -7e -T0 >"${temp_path}"; then
-    #    return 1
-    #fi
-
-    touch -d "${timestamp}" "${temp_path}" || return 1
-    chmod 644 "${temp_path}" || return 1
-    mv -f "${temp_path}" "${pkg_path}" || return 1
-    trap - EXIT INT TERM
-    sign_file "${pkg_path}"
+        echo "[*] Creating the install package..."
+        mkdir -p "${CACHED_DIR}"
+        rm -f "${pkg_path}"
+        rm -f "${pkg_path}.sha256"
+        cleanup() { rm -f "${temp_path}"; }
+        trap 'cleanup; exit 130' INT
+        trap 'cleanup; exit 143' TERM
+        trap 'cleanup' EXIT
+        temp_path=$(mktemp "${pkg_path}.XXXXXX")
+        timestamp="@$(stat -c %Y "${1}")"
+        if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
+                --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
+                -C "${PREFIX}" "$@" \
+                -cv | ${compressor} >"${temp_path}"; then
+            return 1
+        fi
+        touch -d "${timestamp}" "${temp_path}" || return 1
+        chmod 644 "${temp_path}" || return 1
+        mv -f "${temp_path}" "${pkg_path}" || return 1
+        trap - EXIT INT TERM
+        sign_file "${pkg_path}"
+    done
 
     echo ""
     echo ""
