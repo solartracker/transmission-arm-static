@@ -600,7 +600,7 @@ check_static() {
     for bin in "$@"; do
         echo "Checking ${bin}"
         file "${bin}" || true
-        if ${CROSS_PREFIX}readelf -d "${bin}" 2>/dev/null | grep NEEDED; then
+        if ${READELF} -d "${bin}" 2>/dev/null | grep NEEDED; then
             rc=1
         fi || true
         "${LDD}" "${bin}" 2>&1 || true
@@ -619,7 +619,7 @@ finalize_build() {
     set +x
     echo ""
     echo "Stripping symbols and sections from files..."
-    ${CROSS_PREFIX}strip -v "$@"
+    ${STRIP} -v "$@"
 
     # Exit here, if the programs are not statically linked.
     # If any binaries are not static, check_static() returns 1
@@ -815,6 +815,7 @@ export CC=${CROSS_PREFIX}gcc
 export AR=${CROSS_PREFIX}ar
 export RANLIB=${CROSS_PREFIX}ranlib
 export STRIP=${CROSS_PREFIX}strip
+export READELF=${CROSS_PREFIX}readelf
 
 CFLAGS_COMMON="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
 export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
