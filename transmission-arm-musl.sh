@@ -103,7 +103,7 @@ download_and_compile
 create_install_package
 
 return 0
-}
+} #END main()
 
 ################################################################################
 # Create install package
@@ -121,7 +121,7 @@ add_items_to_install_package "bin/transmission-cli" \
                              "bin/transmission-show" \
                              "share/transmission"
 return 0
-}
+} #END create_install_package()
 
 ################################################################################
 # CMake toolchain file
@@ -163,11 +163,10 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_C_STANDARD 11)"
     printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
     printf '%s\n' ""
-} >"${PREFIX}/arm-musl.toolchain.cmake"
+} >"${SRC_ROOT}/arm-musl.toolchain.cmake"
 
 return 0
-} #END create_cmake_toolchain_file
-
+} #END create_cmake_toolchain_file()
 
 ################################################################################
 # Helpers
@@ -965,7 +964,7 @@ add_items_to_install_package()
 # ARM Linux musl Cross-Compiler v0.2.0
 #
 install_build_environment() {
-(
+( #BEGIN sub-shell
 PKG_NAME=cross-arm-linux-musleabi
 get_latest() { get_latest_package "${PKG_NAME}-${HOST_CPU}-" "??????????????" ".tar.xz"; }
 #PKG_VERSION="$(get_latest)" # this line will fail if you did not build a toolchain yourself
@@ -1031,8 +1030,8 @@ if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ]; then
     echo ""
     exit 1
 fi
-)
-}
+) #END sub-shell
+} #END install_build_environment()
 
 download_and_compile() {
 if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
@@ -1061,7 +1060,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd build
 
     cmake .. \
-        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+        -DCMAKE_TOOLCHAIN_FILE=${SRC_ROOT}/arm-musl.toolchain.cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
@@ -1461,7 +1460,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 #    cd build
 #
 #    cmake .. \
-#        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+#        -DCMAKE_TOOLCHAIN_FILE=${SRC_ROOT}/arm-musl.toolchain.cmake \
 #        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
 #        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
 #        -DCMAKE_PREFIX_PATH="${PREFIX}" \
@@ -1579,7 +1578,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd build
 
     cmake .. \
-        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+        -DCMAKE_TOOLCHAIN_FILE=${SRC_ROOT}/arm-musl.toolchain.cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
@@ -1918,7 +1917,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd build
 
     cmake .. \
-        -DCMAKE_TOOLCHAIN_FILE=${PREFIX}/arm-musl.toolchain.cmake \
+        -DCMAKE_TOOLCHAIN_FILE=${SRC_ROOT}/arm-musl.toolchain.cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE} \
         -DCMAKE_PREFIX_PATH="${PREFIX}" \
@@ -1966,7 +1965,7 @@ fi
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 return 0
-} #END download_and_compile
+} #END download_and_compile()
 
 
 main
