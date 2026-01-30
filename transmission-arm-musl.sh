@@ -85,6 +85,10 @@ esac
 SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
 mkdir -p "${SRC_ROOT}"
 
+PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
+rm -rf "${PACKAGER_ROOT}"
+mkdir -p "${PACKAGER_ROOT}"
+
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
 
@@ -113,13 +117,18 @@ set +x
 echo ""
 echo "[*] Finished building Transmission ${BUILD_TRANSMISSION_VERSION}"
 echo ""
-add_items_to_install_package "bin/transmission-cli" \
-                             "bin/transmission-create" \
-                             "bin/transmission-daemon" \
-                             "bin/transmission-edit" \
-                             "bin/transmission-remote" \
-                             "bin/transmission-show" \
-                             "share/transmission"
+
+mkdir -p "${PACKAGER_ROOT}/bin/"
+mkdir -p "${PACKAGER_ROOT}/share/"
+cp -p "${PREFIX}/bin/transmission-cli" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/transmission-create" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/transmission-daemon" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/transmission-edit" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/transmission-remote" "${PACKAGER_ROOT}/bin/"
+cp -p "${PREFIX}/bin/transmission-show" "${PACKAGER_ROOT}/bin/"
+cp -a "${PREFIX}/share/transmission" "${PACKAGER_ROOT}/share/"
+add_items_to_install_package
+
 return 0
 } #END create_install_package()
 
@@ -870,25 +879,11 @@ restore_shared_libraries() {
 
 add_items_to_install_package()
 ( # BEGIN sub-shell
-    [ "$#" -gt 0 ] || return 1
     [ -n "$PKG_ROOT" ]            || return 1
     [ -n "$PKG_ROOT_VERSION" ]    || return 1
     [ -n "$PKG_ROOT_RELEASE" ]    || return 1
     [ -n "$PKG_TARGET_CPU" ]      || return 1
     [ -n "$CACHED_DIR" ]          || return 1
-
-    echo "[*] Add items to install package..."
-    local ready=true
-    for f in "$@"; do
-        if [ -e "${PREFIX}/${f}" ]; then
-            echo "Found:   ${f}"
-        else
-            ready=false
-            echo "MISSING: ${f}"
-        fi
-    done
-    echo ""
-    ${ready} || return 1
 
     local pkg_files=""
     for fmt in gz xz; do
@@ -913,9 +908,10 @@ add_items_to_install_package()
         trap 'cleanup' EXIT
         temp_path=$(mktemp "${pkg_path}.XXXXXX")
         timestamp="@$(stat -c %Y "${PREFIX}/${1}")"
+        cd "${PACKAGER_ROOT}" || return 1
         if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
                 --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
-                -C "${PREFIX}" "$@" \
+                -C "${PACKAGER_ROOT}" * \
                 -cv | ${compressor} >"${temp_path}"; then
             return 1
         fi
