@@ -65,6 +65,9 @@ export STRIP=${CROSS_PREFIX}strip
 export READELF=${CROSS_PREFIX}readelf
 
 CFLAGS_COMMON="-O3 -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -fomit-frame-pointer -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
+
+#CFLAGS_COMMON="-g3 -ggdb3 -O0 -fno-omit-frame-pointer -fno-inline -march=armv7-a -mtune=cortex-a9 -marm -mfloat-abi=soft -mabi=aapcs-linux -ffunction-sections -fdata-sections -pipe -Wall -fPIC"
+
 export CFLAGS="${CFLAGS_COMMON} -std=gnu99"
 export CXXFLAGS="${CFLAGS_COMMON} -std=gnu++17"
 export LDFLAGS="-L${PREFIX}/lib -Wl,--gc-sections"
@@ -108,7 +111,7 @@ return 0
 create_install_package() {
 set +x
 echo ""
-echo "[*] Finished building Transmission ${PKG_ROOT_VERSION}"
+echo "[*] Finished building Transmission ${BUILD_TRANSMISSION_VERSION}"
 echo ""
 add_items_to_install_package "bin/transmission-cli" \
                              "bin/transmission-create" \
