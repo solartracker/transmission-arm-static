@@ -1805,6 +1805,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
 
+    # uninstall other version of Transmission that may already be installed
+    rm -rf "${PREFIX}/bin/transmission-cli" \
+           "${PREFIX}/bin/transmission-create" \
+           "${PREFIX}/bin/transmission-daemon" \
+           "${PREFIX}/bin/transmission-edit" \
+           "${PREFIX}/bin/transmission-remote" \
+           "${PREFIX}/bin/transmission-show" \
+           "${PREFIX}/share/transmission"
+
     # temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
     hide_shared_libraries
 
@@ -1911,6 +1920,15 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     # miniupnpc directory is empty, but we can link to the actual location
     rmdir third-party/miniupnpc
     ln -sfn miniupnp/miniupnpc third-party/miniupnpc
+
+    # uninstall other version of Transmission that may already be installed
+    rm -rf "${PREFIX}/bin/transmission-cli" \
+           "${PREFIX}/bin/transmission-create" \
+           "${PREFIX}/bin/transmission-daemon" \
+           "${PREFIX}/bin/transmission-edit" \
+           "${PREFIX}/bin/transmission-remote" \
+           "${PREFIX}/bin/transmission-show" \
+           "${PREFIX}/share/transmission"
 
     rm -rf build
     mkdir -p build
