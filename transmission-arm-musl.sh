@@ -90,15 +90,40 @@ export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
 install_build_environment
-create_cmake_toolchain_file
+
+if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
+    create_cmake_toolchain_file
+fi
+
 download_and_compile
+
 create_install_package
 
 return 0
 }
 
+################################################################################
+# Create install package
+#
+create_install_package() {
+set +x
+echo ""
+echo "[*] Finished building Transmission ${PKG_ROOT_VERSION}"
+echo ""
+add_items_to_install_package "bin/transmission-cli" \
+                             "bin/transmission-create" \
+                             "bin/transmission-daemon" \
+                             "bin/transmission-edit" \
+                             "bin/transmission-remote" \
+                             "bin/transmission-show" \
+                             "share/transmission"
+return 0
+}
+
+################################################################################
+# CMake toolchain file
+#
 create_cmake_toolchain_file() {
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
 # CMAKE options
 CMAKE_BUILD_TYPE="RelWithDebInfo"
 CMAKE_VERBOSE_MAKEFILE="YES"
@@ -136,7 +161,6 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_CXX_STANDARD 17)"
     printf '%s\n' ""
 } >"${PREFIX}/arm-musl.toolchain.cmake"
-fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
 
 return 0
 } #END create_cmake_toolchain_file
@@ -932,24 +956,6 @@ add_items_to_install_package()
 
     return 0
 ) # END sub-shell
-
-################################################################################
-# Create install package
-#
-create_install_package() {
-set +x
-echo ""
-echo "[*] Finished building GDB ${BUILD_TRANSMISSION_VERSION}"
-echo ""
-add_items_to_install_package "bin/transmission-cli" \
-                             "bin/transmission-create" \
-                             "bin/transmission-daemon" \
-                             "bin/transmission-edit" \
-                             "bin/transmission-remote" \
-                             "bin/transmission-show" \
-                             "share/transmission"
-return 0
-}
 
 ################################################################################
 # Install the build environment
