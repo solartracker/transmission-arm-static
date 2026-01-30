@@ -113,10 +113,6 @@ return 0
 # Create install package
 #
 create_install_package() {
-set +x
-echo ""
-echo "[*] Finished building Transmission ${BUILD_TRANSMISSION_VERSION}"
-echo ""
 
 mkdir -p "${PACKAGER_ROOT}/bin"
 mkdir -p "${PACKAGER_ROOT}/share"
@@ -1956,6 +1952,11 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 fi
 )
 fi # if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"
+
+set +x
+echo ""
+echo "[*] Finished compiling ${PKG_ROOT} ${BUILD_TRANSMISSION_VERSION}"
+echo ""
 
 return 0
 } #END download_and_compile()
