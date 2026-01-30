@@ -594,13 +594,13 @@ apply_patch() {
     [ -n "$1" ] || return 1
     [ -n "$2" ] || return 1
 
-    local patch_path="$1"
+    local patch_file="$1"
     local target_dir="$2"
 
-    if [ -f "${patch_path}" ]; then
-        echo "Applying patch: ${patch_path}"
-        if patch --dry-run --silent -p1 -d "${target_dir}/" -i "${patch_path}"; then
-            if ! patch -p1 -d "${target_dir}/" -i "${patch_path}"; then
+    if [ -f "${patch_file}" ]; then
+        echo "Applying patch: ${patch_file}"
+        if patch --dry-run --silent -p1 -d "${target_dir}/" -i "${patch_file}"; then
+            if ! patch -p1 -d "${target_dir}/" -i "${patch_file}"; then
                 echo "The patch failed."
                 return 1
             fi
@@ -609,7 +609,7 @@ apply_patch() {
             return 1
         fi
     else
-        echo "Patch not found: ${patch_path}"
+        echo "Patch not found: ${patch_file}"
         return 1
     fi
 
@@ -638,42 +638,21 @@ apply_patch_folder() {
     return ${rc}
 }
 
-rm_safe() {
-    [ -n "$1" ] || return 1
-    local target_dir="$1"
-
-    # Prevent absolute paths
-    case "${target_dir}" in
-        /*)
-            echo "Refusing to remove absolute path: ${target_dir}"
-            return 1
-            ;;
-    esac
-
-    # Prevent current/parent directories
-    case "${target_dir}" in
-        "."|".."|*/..|*/.)
-            echo "Refusing to remove . or .. or paths containing ..: ${target_dir}"
-            return 1
-            ;;
-    esac
-
-    # Finally, remove safely
-    rm -rf -- "${target_dir}"
-
-    return 0
-}
-
 apply_patches() {
     [ -n "$1" ] || return 1
     [ -n "$2" ] || return 1
 
-    local patch_dir="$1"
+    local patch_file_or_dir="$1"
     local target_dir="$2"
 
-    if ! apply_patch_folder "${patch_dir}" "${target_dir}"; then
-        #rm_safe "${target_dir}"
-        return 1
+    if [ -f "${patch_file_or_dir}" ]; then
+        if ! apply_patch "${patch_file_or_dir}" "${target_dir}"; then
+            return 1
+        fi
+    elif [ -d "${patch_file_or_dir}" ]; then
+        if ! apply_patch_folder "${patch_file_or_dir}" "${target_dir}"; then
+            return 1
+        fi
     fi
 
     return 0
@@ -1450,7 +1429,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker" "."
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/libnatpmp-20230423/solartracker" "."
 
     $MAKE CC=${CC} CFLAGS="${CFLAGS} -DENABLE_STRNATPMPERR"
     make install INSTALLPREFIX=${PREFIX}
@@ -1497,7 +1476,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/miniupnpc-2.2.8/entware" "."
 
     $MAKE CC=${CC} CFLAGS="${CFLAGS}"
     make install INSTALLPREFIX=${PREFIX}
@@ -1622,7 +1601,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/libb64-20200908+git/entware" "."
 
     mkdir -p ${PREFIX}/include/b64
     cp -p include/b64/*.h ${PREFIX}/include/b64/
@@ -1803,7 +1782,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     unpack_archive "${PKG_SOURCE}" "${PKG_SOURCE_SUBDIR}"
     cd "${PKG_SOURCE_SUBDIR}"
 
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/transmission-3.00/entware" "."
 
     # uninstall other version of Transmission that may already be installed
     rm -rf "${PREFIX}/bin/transmission-cli" \
@@ -1904,13 +1883,13 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     # apply patches from openwrt/entware
-    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/entware" "."
+    apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/transmission-4.0.6/entware" "."
 
     # change the shared library names (.so) to static ones (.a) with proper link order
     if contains "${BUILD_TRANSMISSION_VERSION}" "system_third_party"; then
-        apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/system" "."
+        apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/transmission-4.0.6/solartracker/system" "."
     else
-        apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/${PKG_SOURCE_SUBDIR}/solartracker/bundled" "."
+        apply_patches "${SCRIPT_DIR}/patches/${PKG_NAME}/transmission-4.0.6/solartracker/bundled" "."
     fi
     #generate_patches_for_static_linking
 
