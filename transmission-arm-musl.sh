@@ -123,7 +123,7 @@ cp -p "${PREFIX}/bin/transmission-edit" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/transmission-remote" "${PACKAGER_ROOT}/bin/"
 cp -p "${PREFIX}/bin/transmission-show" "${PACKAGER_ROOT}/bin/"
 cp -a "${PREFIX}/share/transmission" "${PACKAGER_ROOT}/share/"
-add_items_to_install_package
+add_items_to_install_package "${PREFIX}/bin/transmission-daemon"
 
 return 0
 } #END create_install_package()
@@ -875,12 +875,14 @@ restore_shared_libraries() {
 
 add_items_to_install_package()
 ( # BEGIN sub-shell
+    [ -n "$1" ] || return 1
     [ -n "$PKG_ROOT" ]            || return 1
     [ -n "$PKG_ROOT_VERSION" ]    || return 1
     [ -n "$PKG_ROOT_RELEASE" ]    || return 1
     [ -n "$PKG_TARGET_CPU" ]      || return 1
     [ -n "$CACHED_DIR" ]          || return 1
 
+    local timestamp_file="$1"
     local pkg_files=""
     for fmt in gz xz; do
         local pkg_file="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}.tar.${fmt}"
@@ -903,7 +905,7 @@ add_items_to_install_package()
         trap 'cleanup; exit 143' TERM
         trap 'cleanup' EXIT
         temp_path=$(mktemp "${pkg_path}.XXXXXX")
-        timestamp="@$(stat -c %Y "${PREFIX}/${1}")"
+        timestamp="@$(stat -c %Y "${timestamp_file}")"
         cd "${PACKAGER_ROOT}" || return 1
         if ! tar --numeric-owner --owner=0 --group=0 --sort=name --mtime="${timestamp}" \
                 --transform "s|^|${PKG_ROOT}-${PKG_ROOT_VERSION}/|" \
