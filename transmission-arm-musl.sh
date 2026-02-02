@@ -83,11 +83,7 @@ case "${HOST_CPU}" in
 esac
 
 SRC_ROOT="${CROSSBUILD_DIR}/src/${PKG_ROOT}"
-mkdir -p "${SRC_ROOT}"
-
 PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
-rm -rf "${PACKAGER_ROOT}"
-mkdir -p "${PACKAGER_ROOT}"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
@@ -114,6 +110,7 @@ return 0
 #
 create_install_package() {
 
+rm -rf "${PACKAGER_ROOT}"
 mkdir -p "${PACKAGER_ROOT}/bin"
 mkdir -p "${PACKAGER_ROOT}/share"
 cp -p "${PREFIX}/bin/transmission-cli" "${PACKAGER_ROOT}/bin/"
@@ -934,14 +931,14 @@ add_items_to_install_package()
 
 ################################################################################
 # Install the build environment
-# ARM Linux musl Cross-Compiler v0.2.0
+# ARM Linux musl Cross-Compiler v0.2.1
 #
 install_build_environment() {
 ( #BEGIN sub-shell
 PKG_NAME=cross-arm-linux-musleabi
 get_latest() { get_latest_package "${PKG_NAME}-${HOST_CPU}-" "??????????????" ".tar.xz"; }
 #PKG_VERSION="$(get_latest)" # this line will fail if you did not build a toolchain yourself
-PKG_VERSION=0.2.0 # this line will cause a toolchain to be downloaded from Github
+PKG_VERSION=0.2.1 # this line will cause a toolchain to be downloaded from Github
 PKG_SOURCE="${PKG_NAME}-${HOST_CPU}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE_URL="https://github.com/solartracker/${PKG_NAME}/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
@@ -966,12 +963,12 @@ else
     # number is the Github tag, instead of a 14 digit timestamp.
     case "${HOST_CPU}" in
         armv7l)
-            # cross-arm-linux-musleabi-armv7l-0.2.0.tar.xz
-            PKG_HASH="db200a801420d21b5328c9005225bb0fa822b612c6b67b3da58c397458238634"
+            # cross-arm-linux-musleabi-armv7l-0.2.1.tar.xz
+            PKG_HASH="112a4668a4d2b1d11e1c3234be12ed5cd3b06d3abc2f23e336cd0bb677e2c844"
             ;;
         x86_64)
-            # cross-arm-linux-musleabi-x86_64-0.2.0.tar.xz
-            PKG_HASH="9a303a9978ff8d590394bccf2a03890ccb129916347dcdd66dc7780ea7826d9b"
+            # cross-arm-linux-musleabi-x86_64-0.2.1.tar.xz
+            PKG_HASH="1b66015d67801aa6f73d2341d9513639140dcf593322437e17a8fe47c3c2d725"
             ;;
         *)
             echo "Unsupported CPU architecture: "${HOST_CPU} >&2
@@ -1007,6 +1004,8 @@ fi
 } #END install_build_environment()
 
 download_and_compile() {
+mkdir -p "${SRC_ROOT}"
+
 if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
 # libdeflate-1.25
