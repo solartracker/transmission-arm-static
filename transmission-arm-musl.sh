@@ -129,6 +129,8 @@ return 0
 # CMake toolchain file
 #
 create_cmake_toolchain_file() {
+mkdir -p "${SRC_ROOT}"
+
 # CMAKE options
 CMAKE_BUILD_TYPE="RelWithDebInfo"
 CMAKE_VERBOSE_MAKEFILE="YES"
