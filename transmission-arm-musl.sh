@@ -75,10 +75,10 @@ export CPPFLAGS="-I${PREFIX}/include -D_GNU_SOURCE"
 
 case "${HOST_CPU}" in
     armv7l)
-        LDD="${SYSROOT}/lib/libc.so --list"
+        ARCH_NATIVE=true
         ;;
     *)
-        LDD=true
+        ARCH_NATIVE=false
         ;;
 esac
 
@@ -204,7 +204,7 @@ sign_file()
 
     local target_path="$1"
     local option="$2"
-    local sign_path="$(readlink -f "${target_path}").sha256"
+    local sign_path="$(readlink -f "${target_path}").sum"
     local target_file="$(basename -- "${target_path}")"
     local target_file_hash=""
     local temp_path=""
@@ -303,7 +303,7 @@ verify_hash() {
     local expected="$2"
     local option="$3"
     local actual=""
-    local sign_path="$(readlink -f "${file_path}").sha256"
+    local sign_path="$(readlink -f "${file_path}").sum"
     local line=""
 
     if [ ! -f "${file_path}" ]; then
@@ -357,7 +357,7 @@ verify_hash() {
 signature_file_exists() {
     [ -n "$1" ] || return 1
     local file_path="$1"
-    local sign_path="$(readlink -f "${file_path}").sha256"
+    local sign_path="$(readlink -f "${file_path}").sum"
     if [ -f "${sign_path}" ]; then
         return 0
     else
@@ -810,6 +810,14 @@ update_patch_library() {
 }
 
 check_static() {
+    ldd() {
+        if ${ARCH_NATIVE}; then
+            "${SYSROOT}/lib/libc.so" --list "$@"
+        else
+            true
+        fi
+    }
+
     local rc=0
     for bin in "$@"; do
         echo "Checking ${bin}"
@@ -817,7 +825,7 @@ check_static() {
         if ${READELF} -d "${bin}" 2>/dev/null | grep NEEDED; then
             rc=1
         fi || true
-        "${LDD}" "${bin}" 2>&1 || true
+        ldd "${bin}" 2>&1 || true
     done
 
     if [ ${rc} -eq 1 ]; then
@@ -858,16 +866,16 @@ finalize_build() {
 
 # temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
 hide_shared_libraries() {
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    mkdir "${PREFIX}/lib_hidden" || true
-    mv "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
-    mv "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
+    mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mkdir -p "${PREFIX}/lib_hidden" || true
+    mv -f "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
+    mv -f "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
     return 0
 }
 
 # restore the hidden shared libraries
 restore_shared_libraries() {
-    mv "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
     rmdir "${PREFIX}/lib_hidden" || true
     return 0
 }
@@ -898,7 +906,7 @@ add_items_to_install_package()
         echo "[*] Creating install package (.${fmt})..."
         mkdir -p "${CACHED_DIR}"
         rm -f "${pkg_path}"
-        rm -f "${pkg_path}.sha256"
+        rm -f "${pkg_path}.sum"
         cleanup() { rm -f "${temp_path}"; }
         trap 'cleanup; exit 130' INT
         trap 'cleanup; exit 143' TERM
@@ -919,7 +927,11 @@ add_items_to_install_package()
         echo ""
         sign_file "${pkg_path}"
 
-        pkg_files="${pkg_files}${pkg_path}\n"
+        if [ -z "${pkg_files}" ]; then
+            pkg_files="${pkg_path}"
+        else
+            pkg_files="${pkg_files}\n${pkg_path}"
+        fi
     done
 
     echo "[*] Finished creating the install package."
