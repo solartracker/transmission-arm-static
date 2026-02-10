@@ -30,9 +30,9 @@ set -x
 
 main() {
 PKG_ROOT=transmission
+PKG_ROOT_RELEASE=2
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=
-PKG_ROOT_RELEASE=2
 
 BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
@@ -40,10 +40,8 @@ BUILD_TRANSMISSION_VERSION="3.00"
 
 if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"; then
     PKG_ROOT_VERSION="3.00"
-    #PKG_ROOT_RELEASE=1
 elif contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
     PKG_ROOT_VERSION="4.0.6"
-    #PKG_ROOT_RELEASE=1
 else
     echo "Unknown version to build Transmission (${BUILD_TRANSMISSION_VERSION})"
     return 1
