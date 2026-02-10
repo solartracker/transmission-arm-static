@@ -32,6 +32,7 @@ main() {
 PKG_ROOT=transmission
 PKG_TARGET_CPU=armv7
 PKG_TARGET_VARIANT=
+PKG_ROOT_RELEASE=2
 
 BUILD_TRANSMISSION_VERSION="3.00"
 #BUILD_TRANSMISSION_VERSION="4.0.6+bundled_third_party"
@@ -39,10 +40,10 @@ BUILD_TRANSMISSION_VERSION="3.00"
 
 if contains "${BUILD_TRANSMISSION_VERSION}" "3.00"; then
     PKG_ROOT_VERSION="3.00"
-    PKG_ROOT_RELEASE=1
+    #PKG_ROOT_RELEASE=1
 elif contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
     PKG_ROOT_VERSION="4.0.6"
-    PKG_ROOT_RELEASE=1
+    #PKG_ROOT_RELEASE=1
 else
     echo "Unknown version to build Transmission (${BUILD_TRANSMISSION_VERSION})"
     return 1
@@ -1081,9 +1082,9 @@ if [ ! -x "${CROSSBUILD_DIR}/bin/${TARGET}-gcc" ]; then
     echo ""
     exit 1
 fi
-if [ ! -x "${CROSSBUILD_DIR}/${TARGET}/lib/libc.so" ]; then
+if [ ! -x "${PREFIX}/lib/libc.so" ]; then
     echo "ERROR: Toolchain installation appears incomplete."
-    echo "Missing libc.so in ${CROSSBUILD_DIR}/${TARGET}/lib"
+    echo "Missing libc.so in ${PREFIX}/lib"
     echo ""
     exit 1
 fi
