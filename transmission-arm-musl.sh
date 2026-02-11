@@ -1017,14 +1017,14 @@ add_items_to_install_package()
 
 ################################################################################
 # Install the build environment
-# ARM Linux musl Cross-Compiler v0.2.1
+# ARM Linux musl Cross-Compiler v0.2.2
 #
 install_build_environment() {
 ( #BEGIN sub-shell
 PKG_NAME=cross-arm-linux-musleabi
 get_latest() { get_latest_package "${PKG_NAME}-${HOST_CPU}-" "??????????????" ".tar.xz"; }
 #PKG_VERSION="$(get_latest)" # this line will fail if you did not build a toolchain yourself
-PKG_VERSION=0.2.1 # this line will cause a toolchain to be downloaded from Github
+PKG_VERSION=0.2.2 # this line will cause a toolchain to be downloaded from Github
 PKG_SOURCE="${PKG_NAME}-${HOST_CPU}-${PKG_VERSION}.tar.xz"
 PKG_SOURCE_URL="https://github.com/solartracker/${PKG_NAME}/releases/download/${PKG_VERSION}/${PKG_SOURCE}"
 PKG_SOURCE_SUBDIR="${PKG_NAME}-${PKG_VERSION}"
@@ -1049,12 +1049,12 @@ else
     # number is the Github tag, instead of a 14 digit timestamp.
     case "${HOST_CPU}" in
         armv7l)
-            # cross-arm-linux-musleabi-armv7l-0.2.1.tar.xz
-            PKG_HASH="112a4668a4d2b1d11e1c3234be12ed5cd3b06d3abc2f23e336cd0bb677e2c844"
+            # cross-arm-linux-musleabi-armv7l-0.2.2.tar.xz
+            PKG_HASH="8ecd47f9212ec26f07c53482fe4e5d08c753f5bc09b21098540dd6063d342f00"
             ;;
         x86_64)
-            # cross-arm-linux-musleabi-x86_64-0.2.1.tar.xz
-            PKG_HASH="1b66015d67801aa6f73d2341d9513639140dcf593322437e17a8fe47c3c2d725"
+            # cross-arm-linux-musleabi-x86_64-0.2.2.tar.xz
+            PKG_HASH="ccdf14e6b0edfb66dd2004cb8fb10e660432ec96ea27b97f8d9471d63f5f4706"
             ;;
         *)
             echo "Unsupported CPU architecture: "${HOST_CPU} >&2
