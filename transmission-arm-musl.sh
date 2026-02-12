@@ -938,17 +938,21 @@ finalize_build() {
 
 # temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
 hide_shared_libraries() {
-    mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+    if [ -d "${PREFIX}/lib_hidden" ]; then
+        mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+        rmdir "${PREFIX}/lib_hidden" || true
+    fi
     mkdir -p "${PREFIX}/lib_hidden" || true
     mv -f "${PREFIX}/lib/"*".so"* "${PREFIX}/lib_hidden/" || true
-    mv -f "${PREFIX}/lib_hidden/libcc1."* "${PREFIX}/lib/" || true
     return 0
 }
 
 # restore the hidden shared libraries
 restore_shared_libraries() {
-    mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
-    rmdir "${PREFIX}/lib_hidden" || true
+    if [ -d "${PREFIX}/lib_hidden" ]; then
+        mv -f "${PREFIX}/lib_hidden/"* "${PREFIX}/lib/" || true
+        rmdir "${PREFIX}/lib_hidden" || true
+    fi
     return 0
 }
 
@@ -1875,9 +1879,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     # temporarily hide shared libraries (.so) to force cmake to use static ones (.a)
     hide_shared_libraries
 
+    export LDFLAGS="-static ${LDFLAGS}" # use static linking for tests run by configure
     export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt"
 
-    LDFLAGS="-static ${LDFLAGS}" \
     ./configure \
         --enable-static \
         --disable-shared \
@@ -1894,7 +1898,9 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --host="${HOST}" \
     || handle_configure_error $?
 
-    $MAKE V=1 LDFLAGS="-static -all-static ${LDFLAGS}"
+    export LDFLAGS="-all-static ${LDFLAGS}" # make static executable
+
+    $MAKE V=1
     make install DESTDIR="" PREFIX="${PREFIX}"
 
     # restore the hidden shared libraries
