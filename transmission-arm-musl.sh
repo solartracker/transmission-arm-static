@@ -61,6 +61,7 @@ CROSS_PREFIX=${TARGET}-
 export CC=${CROSS_PREFIX}gcc
 export AR=${CROSS_PREFIX}ar
 export RANLIB=${CROSS_PREFIX}ranlib
+export OBJCOPY=${CROSS_PREFIX}objcopy
 export STRIP=${CROSS_PREFIX}strip
 export READELF=${CROSS_PREFIX}readelf
 
