@@ -18,15 +18,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 ################################################################################
-PATH_CMD="$(readlink -f -- "$0")"
-SCRIPT_DIR="$(dirname -- "$(readlink -f -- "$0")")"
-PARENT_DIR="$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")"
-CACHED_DIR="${PARENT_DIR}/solartracker-sources"
-FILE_DOWNLOADER='use_wget'
-#FILE_DOWNLOADER='use_curl'
-#FILE_DOWNLOADER='use_curl_socks5_proxy'; CURL_SOCKS5_PROXY="192.168.1.1:9150"
-set -e
-set -x
 
 main() {
 PKG_ROOT=transmission
@@ -151,11 +142,11 @@ CMAKE_CPP_FLAGS="${CPPFLAGS}"
     printf '%s\n' "set(CMAKE_SYSTEM_PROCESSOR arm)"
     printf '%s\n' ""
     printf '%s\n' "# Cross-compiler"
-    printf '%s\n' "set(CMAKE_C_COMPILER arm-linux-musleabi-gcc)"
-    printf '%s\n' "set(CMAKE_CXX_COMPILER arm-linux-musleabi-g++)"
-    printf '%s\n' "set(CMAKE_AR arm-linux-musleabi-ar)"
-    printf '%s\n' "set(CMAKE_RANLIB arm-linux-musleabi-ranlib)"
-    printf '%s\n' "set(CMAKE_STRIP arm-linux-musleabi-strip)"
+    printf '%s\n' "set(CMAKE_C_COMPILER \"${CC}\")"
+    printf '%s\n' "set(CMAKE_CXX_COMPILER \"${CXX}\")"
+    printf '%s\n' "set(CMAKE_AR \"${AR}\")"
+    printf '%s\n' "set(CMAKE_RANLIB \"${RANLIB}\")"
+    printf '%s\n' "set(CMAKE_STRIP \"${STRIP}\")"
     printf '%s\n' ""
 #    printf '%s\n' "# Optional: sysroot"
 #    printf '%s\n' "set(CMAKE_SYSROOT \"${SYSROOT}\")"
@@ -195,8 +186,8 @@ handle_configure_error()
 
     #grep -R --include="config.log" --color=always "undefined reference" .
     #find . -name "config.log" -exec grep -H "undefined reference" {} \;
-    #find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option|No such file or directory" {} \;
-    find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
+    find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option|No such file or directory" {} \;
+    #find . -name "config.log" -exec grep -H -E "undefined reference|can't load library|unrecognized command-line option" {} \;
 
     # Force failure if rc is zero, since error was detected
     [ "${rc}" -eq 0 ] && return 1
@@ -856,6 +847,19 @@ ends_with() {
     esac
 }
 
+system_name() {
+    [ -n "$1" ] || return 1
+
+    local config_guess="$1"
+    [ -f "${config_guess}" ] || return 1
+
+    export CC_FOR_BUILD="$(which gcc)"
+    local system_name="$(${config_guess})"
+    unset CC_FOR_BUILD
+    echo "${system_name}"
+    return 0
+}
+
 is_version_git() {
     case "$1" in
         *+git*)
@@ -913,6 +917,9 @@ check_static() {
         if ${READELF} -d "${bin}" 2>/dev/null | grep NEEDED; then
             rc=1
         fi || true
+        if [ -L "${bin}.static" ]; then
+          rm "${bin}.static" 2>/dev/null || true
+        fi 
         ldd "${bin}" 2>&1 || true
     done
 
@@ -925,7 +932,8 @@ check_static() {
     return ${rc}
 }
 
-finalize_build() {
+finalize_build()
+( # BEGIN sub-shell
     set +x
     echo ""
     echo "Stripping symbols and sections from files..."
@@ -947,10 +955,9 @@ finalize_build() {
             *) ln -sfn "$(basename "${bin}")" "${bin}.static" ;;
         esac
     done
-    set -x
 
     return 0
-}
+) # END sub-shell
 
 # temporarily hide shared libraries (.so) to force cmake to use the static ones (.a)
 hide_shared_libraries() {
@@ -995,7 +1002,7 @@ add_items_to_install_package()
             xz) compressor="xz -zc -7e -T0" ;;
         esac
 
-        echo "[*] Creating install package (.${fmt})..."
+        echo "[*] Add items to package (.${fmt})..."
         mkdir -p "${CACHED_DIR}"
         rm -f "${pkg_path}"
         rm -f "${pkg_path}.sum"
@@ -2075,7 +2082,24 @@ echo ""
 return 0
 } #END download_and_compile()
 
+################################################################################
+# Initialize
+#
+PATH_CMD="$(readlink -f -- "$0")"
+SCRIPT_DIR="$(dirname -- "$(readlink -f -- "$0")")"
+PARENT_DIR="$(dirname -- "$(dirname -- "$(readlink -f -- "$0")")")"
+CACHED_DIR="${PARENT_DIR}/solartracker-sources"
+FILE_DOWNLOADER='use_wget'
+#FILE_DOWNLOADER='use_curl'
+#FILE_DOWNLOADER='use_curl_socks5_proxy'; CURL_SOCKS5_PROXY="192.168.1.1:9150"
+set -e
+set -x
+# Workaround for autotools system name detection when cross-compiling
+SYSTEM="$(system_name "${SCRIPT_DIR}/files/config.guess")"
 
+################################################################################
+# Enter main
+#
 main
 echo ""
 echo "[*] Script exited cleanly."
