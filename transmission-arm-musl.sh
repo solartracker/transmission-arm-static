@@ -81,6 +81,9 @@ STAGE_DIR="${CROSSBUILD_DIR}/stage/${PKG_ROOT}"
 PACKAGER_NAME="${PKG_ROOT}_${PKG_ROOT_VERSION}-${PKG_ROOT_RELEASE}_${PKG_TARGET_CPU}${PKG_TARGET_VARIANT}"
 PACKAGER_ROOT="${CROSSBUILD_DIR}/packager/${PKG_ROOT}/${PACKAGER_NAME}"
 PACKAGER_TOPDIR="${PACKAGER_ROOT}/${PKG_ROOT}-${PKG_ROOT_VERSION}"
+PORTABLE_DIR="/tmp/portable-${PKG_ROOT}"
+SYSROOT_PORTABLE_DIR="${SYSROOT}/tmp/portable-${PKG_ROOT}"
+PREFIX_PORTABLE_DIR="${SYSROOT_PORTABLE_DIR}"
 
 MAKE="make -j$(grep -c ^processor /proc/cpuinfo)" # parallelism
 #MAKE="make -j1"                                  # one job at a time
@@ -90,10 +93,6 @@ export PKG_CONFIG_LIBDIR="${PREFIX}/lib/pkgconfig"
 unset PKG_CONFIG_PATH
 
 install_build_environment
-
-if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6"; then
-    create_cmake_toolchain_file
-fi
 
 download_and_compile
 
@@ -1122,6 +1121,7 @@ download_and_compile() {
 export PATH="${CROSSBUILD_DIR}/bin:${PATH}"
 mkdir -p "${SRC_ROOT}"
 #mkdir -p "${STAGE_DIR}"
+create_cmake_toolchain_file
 
 if contains "${BUILD_TRANSMISSION_VERSION}" "4.0.6+system_third_party"; then
 ################################################################################
@@ -1290,6 +1290,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
         --enable-year2038 \
         --enable-static \
         --disable-shared \
@@ -1298,9 +1300,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-nls \
         --disable-rpath \
         --disable-scripts \
-        --disable-doc \
-        --prefix="${PREFIX}" \
-        --host="${HOST}" \
     || handle_configure_error $?
 
     $MAKE
@@ -1505,7 +1504,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-shared \
         --disable-rpath \
         --disable-nls \
-        --disable-doc \
         --disable-dependency-tracking \
         --disable-silent-rules \
         --enable-year2038 \
@@ -1619,6 +1617,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     cd "${PKG_SOURCE_SUBDIR}"
 
     ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
         --enable-static \
         --disable-shared \
         --disable-nls \
@@ -1627,8 +1627,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --disable-runtime \
         --without-libiconv-prefix \
         --without-libintl-prefix \
-        --prefix="${PREFIX}" \
-        --host="${HOST}" \
     || handle_configure_error $?
 
     $MAKE
@@ -1752,7 +1750,7 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
 
     ./Configure linux-armv4 no-asm \
         enable-zlib enable-zstd no-shared \
-        no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test no-docs \
+        no-tests no-fuzz-afl no-fuzz-libfuzzer no-gost no-err no-unit-test \
         no-err no-async \
         no-aria no-sm2 no-sm3 no-sm4 \
         no-dso no-ssl3 no-comp \
@@ -1812,7 +1810,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --enable-optimize \
         --disable-silent-rules \
         --disable-rt \
-        --disable-docs \
         --without-libpsl \
         --with-openssl \
         --with-zlib \
@@ -1910,6 +1907,8 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
     export LIBS="-lcurl -lssl -lcrypto -levent -lzstd -lz -lm -lpthread -lrt"
 
     ./configure \
+        --prefix="${PREFIX}" \
+        --host="${HOST}" \
         --enable-static \
         --disable-shared \
         --disable-nls \
@@ -1921,8 +1920,6 @@ if [ ! -f "${PKG_SOURCE_SUBDIR}/__package_installed" ]; then
         --enable-largefile \
         --enable-lightweight \
         --with-crypto=openssl \
-        --prefix="${PREFIX}" \
-        --host="${HOST}" \
     || handle_configure_error $?
 
     export LDFLAGS="-all-static ${LDFLAGS}" # make static executable
